@@ -240,7 +240,7 @@ function getTriadEls(){var s=sets[tIdx];if(!s)return[];var ids;try{ids=typeof s.
 function isAI(){return aiCfg.behaviorMode==="ai"}
 function buildCtx(){var te=getTriadEls(),sl=sel.map(function(id){var e=elements.find(function(el){return el.id===id});return e?e.label:""}),dl=te.filter(function(e){return sel.indexOf(e.id)<0});return{triad_labels:te.map(function(e){return e.label}),similar_labels:sl,different_label:dl.length>0?dl[0].label:"",current_pole_a:cur.a,laddering_count:cur.ladCount,constructs:cons.map(function(c){return{a:c.a,b:c.b}}),fixed_pole:fixedParsed[fdI]?fixedParsed[fdI].pole:""}}
 function logChat(role,text,phase){rpc("log_interview_event",{p_token:token,p_event_type:role==="ai"?"ai_message":"user_message",p_phase:phase||currentView,p_payload:JSON.stringify({text:(text||"").substring(0,500)})}).catch(function(){})}
-function saveRatingsFor(ci){var cc=cons[ci];if(!cc||!rats[ci]||!cc.dbId)return;var rd=[];for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl];if(ratingMode==="scale"){rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}else{var q;if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="both";else if(p.y<50&&p.x<50)q="neither";else q="pole_b";rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}if(rd.length>0)rpc("save_ratings",{p_token:token,p_ratings:JSON.stringify(rd)},2).catch(function(e){console.warn("[RGT] saveRatingsFor failed:",e)})}
+function saveRatingsFor(ci){var cc=cons[ci];if(!cc||!rats[ci]||!cc.dbId)return;var rd=[];for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl];if(ratingMode==="scale"){rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}else{var q;if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="pole_b";else if(p.y<50&&p.x<50)q="neither";else q="both";rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}if(rd.length>0)rpc("save_ratings",{p_token:token,p_ratings:JSON.stringify(rd)},2).catch(function(e){console.warn("[RGT] saveRatingsFor failed:",e)})}
 
 document.getElementById("hdr-lang").addEventListener("click",function(){L=L==="de"?"en":"de";this.textContent=L==="de"?"EN":"DE";render()});
 
@@ -498,7 +498,7 @@ function doFinish(){
       if(!c.dbId){skipped++;continue}
       for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl],q;
       if(ratingMode==="scale"){rd.push({construct_id:c.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}
-      else{if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="both";else if(p.y<50&&p.x<50)q="neither";else q="pole_b";rd.push({construct_id:c.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}}
+      else{if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="pole_b";else if(p.y<50&&p.x<50)q="neither";else q="both";rd.push({construct_id:c.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}}
     if(skipped>0)console.warn("[RGT] Skipped ratings for "+skipped+" constructs without dbId");
     var dur=Math.round((Date.now()-startTime)/1000);
     // Phase 3: Ratings + Complete speichern (mit Retry)
