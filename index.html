@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Repertory Grid Interview</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #474747; background: #f4f4f3; min-height: 100vh; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 48px; }
+.card { background: #fff; border-radius: 16px; padding: 32px 28px; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.04); border: 1px solid #e8e8e6; display: flex; flex-direction: column; align-items: center; gap: 16px; max-width: 540px; margin: 0 auto; }
+.card.wide { max-width: 700px; }
+.badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: #f19000; background: rgba(241,144,0,.08); padding: 4px 14px; border-radius: 20px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; background: #f19000; color: #fff; border: none; border-radius: 10px; padding: 11px 24px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; box-shadow: 0 2px 8px rgba(241,144,0,.25); transition: all .15s; }
+.btn:hover { background: #d97e00; box-shadow: 0 4px 12px rgba(241,144,0,.3); }
+.btn:disabled { opacity: .4; cursor: default; background: #c2cbce; box-shadow: none; }
+.btn-gold { background: #f19000; }
+.btn-gold:hover { background: #d97e00; }
+.divider { width: 44px; height: 2px; background: linear-gradient(90deg,transparent,#f19000,transparent); }
+.hdr { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid #e8e8e6; background: rgba(255,255,255,.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50; }
+.ftr { text-align: center; padding: 14px; font-size: 11px; color: #8e9599; border-top: 1px solid #e8e8e6; letter-spacing: .3px; }
+.el-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; background: #fff; border: 2px solid #e8e8e6; border-radius: 14px; padding: 20px 18px; min-width: 140px; flex: 1 1 140px; max-width: 180px; cursor: pointer; font-family: inherit; transition: all .2s; position: relative; }
+.el-btn:hover { border-color: #c2cbce; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.el-btn.sel { background: rgba(241,144,0,.04); border-color: #f19000; transform: translateY(-3px); box-shadow: 0 4px 20px rgba(241,144,0,.15); }
+.el-av { width: 48px; height: 48px; border-radius: 50%; background: #474747; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #fff; }
+.chat-wrap { background: #fff; border-radius: 16px; border: 1px solid #e8e8e6; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.04); }
+.chat-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #e8e8e6; color: #15c4f4; font-size: 11px; font-weight: 600; }
+.chat-msgs { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 120px; max-height: 350px; overflow-y: auto; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.65; animation: fadeIn .3s ease; }
+.msg-ai { background: #f4f4f3; border: 1px solid #e8e8e6; align-self: flex-start; border-bottom-left-radius: 4px; }
+.msg-user { background: #474747; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.chat-input { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #e8e8e6; background: #fafafa; }
+.chat-input input { flex: 1; border: 1.5px solid #dedddb; border-radius: 22px; padding: 9px 16px; font-size: 13px; font-family: inherit; background: #fff; outline: none; color: #474747; transition: border-color .2s; }
+.chat-input input:focus { border-color: #15c4f4; box-shadow: 0 0 0 3px rgba(21,196,244,.1); }
+.chat-input button { width: 36px; height: 36px; border-radius: 50%; background: #f19000; border: none; color: #fff; font-size: 16px; cursor: pointer; transition: background .15s; }
+.chat-input button:hover { background: #d97e00; }
+.pole { flex: 1 1 160px; background: #fafafa; border-radius: 12px; padding: 14px; border: 1px solid #e8e8e6; text-align: center; }
+.pole-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: #8e9599; font-weight: 600; margin-bottom: 4px; }
+.pole-val { font-size: 16px; font-weight: 600; color: #474747; }
+.tet-btn { padding: 10px 16px; border: 2px solid #e8e8e6; border-radius: 10px; background: #fff; cursor: pointer; font-family: inherit; font-size: 12px; color: #6b7280; flex: 1; min-width: 70px; text-align: center; transition: all .15s; }
+.tet-btn.active { border-color: #f19000; background: rgba(241,144,0,.04); color: #d97e00; font-weight: 600; }
+.tet-field { position: relative; width: 100%; padding-bottom: 80%; background: linear-gradient(135deg, rgba(241,144,0,.03) 0%, #fafafa 50%, rgba(21,196,244,.03) 100%); border: 2px solid #dedddb; border-radius: 12px; cursor: crosshair; overflow: hidden; transition: border-color .3s; }
+.tet-field.complete { cursor: default; border-color: #e8e8e6; }
+.tet-cross-v { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #dedddb; }
+.tet-cross-h { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #dedddb; }
+.tet-corner { position: absolute; font-size: 10px; color: #8e9599; max-width: 40%; line-height: 1.2; }
+.tet-dot { position: absolute; transform: translate(-50%, 50%); background: #474747; color: #fff; padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 600; white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,.15); cursor: grab; z-index: 10; user-select: none; }
+.tet-current { display: inline-block; padding: 8px 20px; background: #f19000; color: #fff; border-radius: 22px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 16px rgba(241,144,0,.25); }
+.tet-queue { padding: 3px 10px; background: #f4f4f3; border-radius: 12px; font-size: 11px; color: #8e9599; border: 1px solid #e8e8e6; }
+.loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
+.spinner { width: 36px; height: 36px; border: 3px solid #e8e8e6; border-top-color: #f19000; border-radius: 50%; animation: spin 1s linear infinite; }
+.hidden { display: none !important; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 0%,100%{opacity:.2} 50%{opacity:1} }
+.typing-dots { display:flex; gap:5px; padding:10px 14px; align-self:flex-start; background:#f4f4f3; border:1px solid #e8e8e6; border-radius:14px; border-bottom-left-radius:4px; }
+.typing-dots span { width:7px; height:7px; border-radius:50%; background:#f19000; animation:blink 1.4s infinite; }
+.typing-dots span:nth-child(2) { animation-delay:.2s; }
+.typing-dots span:nth-child(3) { animation-delay:.4s; }
+.chat-input input:disabled { opacity:.5; background:#f4f4f3; }
+.chat-input button:disabled { opacity:.3; cursor:default; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="width:28px;height:28px;border-radius:8px;background:#474747;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#f19000">H</div>
+    <span id="hdr-title" style="font-size:13px;font-weight:600;color:#474747">Repertory Grid Tool</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="hdr-saved" class="hidden" style="font-size:10px;color:#8e9599"></span>
+    <button id="hdr-lang" class="hidden" style="font-size:10px;font-weight:700;background:rgba(21,196,244,.08);border:1px solid rgba(21,196,244,.2);border-radius:6px;padding:3px 8px;cursor:pointer;color:#474747;font-family:inherit">EN</button>
+  </div>
+</div>
+
+<div class="wrap"><div id="view"><div class="loading"><div class="spinner"></div><p style="color:#8e9599;font-size:14px">Wird geladen...</p></div></div></div>
+
+<div class="ftr">2026 Dr. Hamberger und Partner - Repertory Grid Tool</div>
+<script>
+// === CONFIG ===
+var SB_URL = "https://zjkpbxetrplzptvdeqpk.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqa3BieGV0cnBsenB0dmRlcXBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MjcyMDgsImV4cCI6MjA4ODAwMzIwOH0.5uGQOX7Ez84R3ZiJamHV0P_6BPDNMn8ZKdMJlJwdJCo";
+
+function wait(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+function rpc(fn, params, retries) {
+  var maxRetries = typeof retries === "number" ? retries : 0;
+  var attempt = 0;
+  function tryOnce() {
+    return fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: { "apikey": SB_KEY, "Content-Type": "application/json", "Authorization": "Bearer " + SB_KEY },
+      body: JSON.stringify(params || {})
+    }).then(function(r) {
+      if (r.status === 429 || r.status >= 500) {
+        if (attempt < maxRetries) { attempt++; return wait(1000 * attempt).then(tryOnce); }
+      }
+      if (!r.ok) throw new Error("RPC " + fn + " " + r.status);
+      return r.json();
+    }).catch(function(err) {
+      if (attempt < maxRetries) { attempt++; return wait(1000 * attempt).then(tryOnce); }
+      throw err;
+    });
+  }
+  return tryOnce();
+}
+
+// === AI PROXY mit Retry (Rate Limits + Serverfehler) ===
+function callAI(chatMsgs, phase, ctx) {
+  var attempt = 0;
+  var maxRetries = 3;
+  function tryOnce() {
+    return fetch(SB_URL + "/functions/v1/ai-interview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SB_KEY },
+      body: JSON.stringify({ token: token, messages: chatMsgs, phase: phase, context: ctx })
+    }).then(function(r) {
+      if (r.status === 429) {
+        if (attempt < maxRetries) { attempt++; console.log("[RGT] AI rate limited, retry " + attempt + "/3 in " + (2000 * attempt) + "ms"); return wait(2000 * attempt).then(tryOnce); }
+      }
+      if (r.status >= 500) {
+        if (attempt < maxRetries) { attempt++; return wait(1500 * attempt).then(tryOnce); }
+      }
+      if (!r.ok) throw new Error("AI " + r.status);
+      return r.json();
+    }).catch(function(err) {
+      if (attempt < maxRetries && String(err).indexOf("Failed to fetch") >= 0) { attempt++; return wait(2000 * attempt).then(tryOnce); }
+      throw err;
+    });
+  }
+  return tryOnce();
+}
+
+// === TRACKING ===
+function startHeartbeat() {
+  if (hbInterval) clearInterval(hbInterval);
+  hbInterval = setInterval(function() {
+    rpc("heartbeat", { p_token: token, p_phase: currentView }).catch(function(){});
+  }, 30000);
+}
+function setupAbandon() {
+  window.addEventListener("beforeunload", function() {
+    var url = SB_URL + "/rest/v1/rpc/mark_abandoned";
+    var body = JSON.stringify({ p_token: token, p_phase: currentView });
+    try {
+      fetch(url, { method: "POST", headers: { "apikey": SB_KEY, "Content-Type": "application/json", "Authorization": "Bearer " + SB_KEY }, body: body, keepalive: true });
+    } catch(e) {
+      // Fallback: sync XHR
+      try { var x = new XMLHttpRequest(); x.open("POST", url, false); x.setRequestHeader("apikey", SB_KEY); x.setRequestHeader("Content-Type", "application/json"); x.setRequestHeader("Authorization", "Bearer " + SB_KEY); x.send(body); } catch(e2) {}
+    }
+  });
+}
+function saveQQResponses(phase) {
+  var items = qqItems.filter(function(q) { return q.phase === phase; });
+  var responses = items.map(function(q) { return { item_id: q.id, response: qqResponses[q.id] != null ? qqResponses[q.id] : null }; }).filter(function(r) { return r.response != null; });
+  if (responses.length > 0) rpc("save_questionnaire_responses", { p_token: token, p_phase: phase, p_responses: JSON.stringify(responses) }, 2).catch(function(e){console.warn("[RGT] saveQQ failed:",e)});
+}
+
+// === STATE ===
+var L="de", session=null, currentView="loading", round=0, tIdx=0, sel=[], cons=[];
+var cur = { a:"", b:"", lad:[], ladCount:0, plausCount:0, clarifyCount:0 };
+var rats={}, rCI=0, fdI=0, msgs=[], consentOk=false, startTime=Date.now();
+var nextAfterRate="triad", study=null, elements=[], sets=[], fixedParsed=[];
+var maxCon=5, ladderRounds=0, ratingMode="tetralemma", sending=false;
+var elicitMode="triad", selMode="select_two", redirectUrl=null;
+var participant=null, qqItems=[], qqResponses={}, hbInterval=null;
+var aiCfg = { textMode:"template", behaviorMode:"mechanical", crossRef:"none", crossFreq:"mid", tone:"formal", ladderDir:"up" };
+
+// === i18n ===
+var T = {
+  de: {
+    begin:"Teilnahme starten", cont:"Weiter", dur:"~12 Min.", langLabel:"Sprache",
+    consentTitle:"Einverst\u00e4ndniserkl\u00e4rung",
+    consentP:"Ihre Teilnahme ist freiwillig. Alle Antworten werden pseudonymisiert und gem\u00e4\u00df DSGVO sicher gespeichert.",
+    consentAgree:"Ich habe die Bedingungen gelesen und stimme zu",
+    triadQ:"Welche zwei Elemente sind sich am \u00e4hnlichsten?",
+    triadSub:"Tippen Sie auf die zwei \u00e4hnlichsten.",
+    confirmSel:"Auswahl best\u00e4tigen",
+    roundOf:"Runde {c} von {t}", aiName:"KI-Interview-Assistent",
+    constructOf:"Konstrukt {c}/{t}", fixedDim:"Feste Dimension",
+    typePh:"Ihre Antwort eingeben\u2026",
+    elicit:["Sie haben <b>{a}</b> und <b>{b}</b> als \u00e4hnlich gew\u00e4hlt. Was haben diese gemeinsam, das <b>{c}</b> nicht hat?","Interessant \u2014 <b>{a}</b> und <b>{b}</b> geh\u00f6ren f\u00fcr Sie zusammen. Worin unterscheiden sie sich von <b>{c}</b>?","Was verbindet <b>{a}</b> und <b>{b}</b>, das auf <b>{c}</b> nicht zutrifft?","Wenn Sie <b>{a}</b> und <b>{b}</b> vergleichen \u2014 was macht diese beiden \u00e4hnlich?","Sie sehen <b>{a}</b> und <b>{b}</b> als Paar. Welche Eigenschaft teilen sie, die <b>{c}</b> fehlt?"],
+    plaus:["K\u00f6nnen Sie genauer beschreiben, was Sie mit \u00ab{v}\u00bb meinen?","Was genau verstehen Sie unter \u00ab{v}\u00bb?","Wenn Sie \u00ab{v}\u00bb sagen \u2014 k\u00f6nnen Sie das ausf\u00fchren?","Was bedeutet \u00ab{v}\u00bb f\u00fcr Sie in diesem Zusammenhang?","K\u00f6nnten Sie \u00ab{v}\u00bb n\u00e4her erl\u00e4utern?"],
+    ladder:["Interessant: \u00ab{v}\u00bb. Warum ist das f\u00fcr Sie wichtig?","Sie sagen \u00ab{v}\u00bb \u2014 was bedeutet das f\u00fcr Sie pers\u00f6nlich?","Warum spielt \u00ab{v}\u00bb f\u00fcr Sie eine Rolle?","Was macht \u00ab{v}\u00bb f\u00fcr Sie relevant?","Und warum ist \u00ab{v}\u00bb Ihnen wichtig?"],
+    opposite:["Danke. Was w\u00e4re das <b>Gegenteil</b> von \u00ab{v}\u00bb?","Was w\u00e4re f\u00fcr Sie das Gegenteil von \u00ab{v}\u00bb?","Wie w\u00fcrden Sie das <b>Gegenteil</b> von \u00ab{v}\u00bb beschreiben?","Wenn \u00ab{v}\u00bb der eine Pol ist \u2014 was w\u00e4re der andere?","Was steht f\u00fcr Sie im Kontrast zu \u00ab{v}\u00bb?"],
+    fixedP:"Betrachten Sie <b>{p}</b>. Was w\u00e4re das <b>Gegenteil</b>?",
+    confirmTitle:"Konstruktpaar best\u00e4tigen", poleA:"Pol A", poleB:"Pol B (Gegenteil)",
+    startOver:"Neu beginnen", confirmCont:"Best\u00e4tigen", next:"Weiter", finish:"Abschlie\u00dfen",
+    thanks:"Vielen Dank!", thanksSub:"Ihre Antworten wurden erfolgreich gespeichert.",
+    thanksClose:"Sie k\u00f6nnen dieses Fenster jetzt schlie\u00dfen.",
+    loading:"Interview wird geladen\u2026", errorTitle:"Fehler",
+    errorToken:"Ung\u00fcltiger oder fehlender Teilnahme-Link.", saved:"Gespeichert",
+    qqTitle:"Fragebogen", qqRequired:"(Pflichtfeld)", qqNext:"Weiter",
+    qqPh:"Ihre Antwort eingeben\u2026", qqSelect:"Bitte w\u00e4hlen\u2026",
+    dyadQ:"Vergleichen Sie diese beiden Elemente:", dyadSub:"Was unterscheidet sie?",
+    scaleInstr:"Bewerten Sie jedes Element auf der Skala.", scaleDone:"Alle bewertet",
+    redirect:"Sie werden in {s} Sekunden weitergeleitet\u2026",
+    resumeInfo:"Ihr Fortschritt wurde wiederhergestellt."
+  },
+  en: {
+    begin:"Begin Participation", cont:"Continue", dur:"~12 min.", langLabel:"Language",
+    consentTitle:"Consent Form",
+    consentP:"Your participation is voluntary. All responses will be pseudonymized and stored securely per GDPR.",
+    consentAgree:"I have read and agree to the terms",
+    triadQ:"Which two elements are most similar?", triadSub:"Tap the two most similar.",
+    confirmSel:"Confirm selection", roundOf:"Round {c} of {t}",
+    aiName:"AI Interview Assistant", constructOf:"Construct {c}/{t}", fixedDim:"Fixed Dimension",
+    typePh:"Enter your answer\u2026",
+    elicit:["You selected <b>{a}</b> and <b>{b}</b> as similar. What do they share that <b>{c}</b> lacks?","Interesting \u2014 <b>{a}</b> and <b>{b}</b> go together. How do they differ from <b>{c}</b>?","What connects <b>{a}</b> and <b>{b}</b> that doesn\u2019t apply to <b>{c}</b>?","What makes <b>{a}</b> and <b>{b}</b> similar, and why doesn\u2019t <b>{c}</b> fit?","You see <b>{a}</b> and <b>{b}</b> as a pair. What quality do they share that <b>{c}</b> lacks?"],
+    plaus:["Could you describe what you mean by \u00ab{v}\u00bb?","What exactly do you mean by \u00ab{v}\u00bb?","When you say \u00ab{v}\u00bb \u2014 could you elaborate?","What does \u00ab{v}\u00bb mean in this context?","Could you explain \u00ab{v}\u00bb in more detail?"],
+    ladder:["Interesting: \u00ab{v}\u00bb. Why is this important to you?","You say \u00ab{v}\u00bb \u2014 what does that mean personally?","Why does \u00ab{v}\u00bb matter to you?","What makes \u00ab{v}\u00bb relevant?","And why is \u00ab{v}\u00bb important to you?"],
+    opposite:["Thank you. What would be the <b>opposite</b> of \u00ab{v}\u00bb?","What would the opposite of \u00ab{v}\u00bb be for you?","How would you describe the <b>opposite</b> of \u00ab{v}\u00bb?","If \u00ab{v}\u00bb is one pole \u2014 what would be the other?","What stands in contrast to \u00ab{v}\u00bb?"],
+    fixedP:"Consider <b>{p}</b>. What would be the <b>opposite</b>?",
+    confirmTitle:"Confirm Construct Pair", poleA:"Pole A", poleB:"Pole B (Opposite)",
+    startOver:"Start Over", confirmCont:"Confirm", next:"Next", finish:"Finish",
+    thanks:"Thank You!", thanksSub:"Your responses have been saved.",
+    thanksClose:"You may close this window.", loading:"Loading\u2026", errorTitle:"Error",
+    errorToken:"Invalid or missing participation link.", saved:"Saved",
+    qqTitle:"Questionnaire", qqRequired:"(required)", qqNext:"Continue",
+    qqPh:"Enter your answer\u2026", qqSelect:"Please select\u2026",
+    dyadQ:"Compare these two elements:", dyadSub:"What distinguishes them?",
+    scaleInstr:"Rate each element on the scale.", scaleDone:"All rated",
+    redirect:"You will be redirected in {s} seconds\u2026",
+    resumeInfo:"Your progress has been restored."
+  }
+};
+
+function tx(key, vars) {
+  var s = T[L][key]; if (Array.isArray(s)) s = s[round % s.length];
+  if (!s) { s = T.de[key]||key; if (Array.isArray(s)) s = s[round%s.length]; }
+  if (typeof s==="string"&&vars) Object.keys(vars).forEach(function(k){s=s.replace(new RegExp("\\{"+k+"\\}","g"),vars[k]);});
+  return s;
+}
+
+var token=null; try{token=new URLSearchParams(location.search).get("t")}catch(e){}
+
+function getTriadEls(){var s=sets[tIdx];if(!s)return[];var ids;try{ids=typeof s.element_ids==="string"?JSON.parse(s.element_ids):s.element_ids}catch(e){ids=[]}return ids.map(function(eid){return elements.find(function(e){return e.id===eid})}).filter(Boolean)}
+function isAI(){return aiCfg.behaviorMode==="ai"}
+function buildCtx(){var te=getTriadEls(),sl=sel.map(function(id){var e=elements.find(function(el){return el.id===id});return e?e.label:""}),dl=te.filter(function(e){return sel.indexOf(e.id)<0});return{triad_labels:te.map(function(e){return e.label}),similar_labels:sl,different_label:dl.length>0?dl[0].label:"",current_pole_a:cur.a,laddering_count:cur.ladCount,constructs:cons.map(function(c){return{a:c.a,b:c.b}}),fixed_pole:fixedParsed[fdI]?fixedParsed[fdI].pole:""}}
+function logChat(role,text,phase){rpc("log_interview_event",{p_token:token,p_event_type:role==="ai"?"ai_message":"user_message",p_phase:phase||currentView,p_payload:JSON.stringify({text:(text||"").substring(0,500)})}).catch(function(){})}
+function saveRatingsFor(ci){var cc=cons[ci];if(!cc||!rats[ci]||!cc.dbId)return;var rd=[];for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl];if(ratingMode==="scale"){rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}else{var q;if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="both";else if(p.y<50&&p.x<50)q="neither";else q="pole_b";rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}if(rd.length>0)rpc("save_ratings",{p_token:token,p_ratings:JSON.stringify(rd)},2).catch(function(e){console.warn("[RGT] saveRatingsFor failed:",e)})}
+
+document.getElementById("hdr-lang").addEventListener("click",function(){L=L==="de"?"en":"de";this.textContent=L==="de"?"EN":"DE";render()});
+
+// ===== RENDER =====
+function render(){
+  var el=document.getElementById("view");
+  var showUI=currentView!=="welcome"&&currentView!=="thanks"&&currentView!=="loading"&&currentView!=="error";
+  document.getElementById("hdr-saved").className=showUI?"":"hidden";
+  document.getElementById("hdr-saved").textContent="\u25cf "+tx("saved");
+  document.getElementById("hdr-lang").className=currentView!=="welcome"&&currentView!=="loading"&&currentView!=="error"?"":"hidden";
+  document.getElementById("hdr-title").textContent=study?study.title:"Repertory Grid Tool";
+  var h="";
+
+  if(currentView==="loading"){el.innerHTML='<div class="loading"><div class="spinner"></div><p style="color:#8e9599;font-size:14px">'+tx("loading")+'</p></div>';return}
+  if(currentView==="error"){el.innerHTML='<div class="card"><h2 style="font-size:20px;font-weight:600">'+tx("errorTitle")+'</h2><div class="divider"></div><p style="font-size:14px;color:#8e9599;text-align:center">'+tx("errorToken")+'</p></div>';return}
+
+  // WELCOME
+  if(currentView==="welcome"){
+    var aiTag=isAI()?'<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(241,144,0,.08);padding:4px 10px;border-radius:12px;font-size:11px;color:#d97e00;border:1px solid rgba(241,144,0,.15)">\u2726 KI-gef\u00fchrt</span>':'';
+    h='<div class="card"><h1 style="font-size:24px;font-weight:700;text-align:center">'+study.title+'</h1><div class="divider"></div>'+aiTag+'<p style="font-size:14px;color:#8e9599;text-align:center;line-height:1.7">'+(study.description||"")+'</p><div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#8e9599;font-weight:600">'+tx("langLabel")+'</span><div style="display:flex;gap:8px"><button id="btn-de" style="padding:8px 18px;border:2px solid '+(L==="de"?"#f19000":"rgba(241,144,0,.2)")+';border-radius:8px;background:'+(L==="de"?"rgba(241,144,0,.04)":"#fafafa")+';cursor:pointer;font-size:13px;color:#474747;font-family:inherit">Deutsch</button><button id="btn-en" style="padding:8px 18px;border:2px solid '+(L==="en"?"#f19000":"rgba(241,144,0,.2)")+';border-radius:8px;background:'+(L==="en"?"rgba(241,144,0,.04)":"#fafafa")+';cursor:pointer;font-size:13px;color:#474747;font-family:inherit">English</button></div></div><div style="display:flex;gap:20px;justify-content:center;font-size:13px"><div style="text-align:center"><div style="font-size:10px;text-transform:uppercase;color:#8e9599;font-weight:600">Dauer</div>'+tx("dur")+'</div><div style="text-align:center"><div style="font-size:10px;text-transform:uppercase;color:#8e9599;font-weight:600">Runden</div>'+maxCon+'</div></div><button class="btn" id="btn-begin">'+tx("begin")+' \u2192</button></div>';
+    el.innerHTML=h;
+    document.getElementById("btn-de").onclick=function(){L="de";render()};
+    document.getElementById("btn-en").onclick=function(){L="en";render()};
+    document.getElementById("btn-begin").onclick=function(){currentView="consent";render()};
+    return;
+  }
+
+  // CONSENT
+  if(currentView==="consent"){
+    h='<div class="card"><h2 style="font-size:20px;font-weight:600;text-align:center">'+tx("consentTitle")+'</h2><div class="divider"></div><div style="background:#fafafa;border-radius:10px;padding:16px 18px;border:1px solid #e8e8e6;font-size:13px;color:#6b7280;line-height:1.7">'+tx("consentP")+'</div><label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="consent-cb" style="accent-color:#f19000;width:18px;height:18px"'+(consentOk?" checked":"")+'>'+tx("consentAgree")+'</label><button class="btn" id="consent-btn"'+(consentOk?"":" disabled")+'>'+tx("cont")+' \u2192</button></div>';
+    el.innerHTML=h;
+    document.getElementById("consent-cb").onchange=function(){consentOk=this.checked;document.getElementById("consent-btn").disabled=!consentOk};
+    document.getElementById("consent-btn").onclick=function(){if(consentOk){var preItems=qqItems.filter(function(q){return q.phase==="pre"});currentView=preItems.length>0?"pre_q":"triad";render()}};
+    return;
+  }
+
+  // PRE/POST QUESTIONNAIRE
+  if(currentView==="pre_q"||currentView==="post_q"){
+    var phase=currentView==="pre_q"?"pre":"post";
+    var items=qqItems.filter(function(q){return q.phase===phase}).sort(function(a,b){return a.position-b.position});
+    var allValid=items.every(function(q){if(!q.required)return true;var r=qqResponses[q.id];return r!=null&&r!==""&&!(Array.isArray(r)&&r.length===0)});
+    h='<div class="card wide"><span class="badge">'+tx("qqTitle")+(phase==="pre"?" (Vor)":" (Nach)")+'</span>';
+    items.forEach(function(q,idx){
+      var v=qqResponses[q.id]!=null?qqResponses[q.id]:"";
+      h+='<div style="width:100%;text-align:left;margin-bottom:12px"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">'+(idx+1)+'. '+q.question_text+(q.required?' <span style="color:#ef4444;font-size:10px">'+tx("qqRequired")+'</span>':'')+'</label>';
+      var cfg=typeof q.config==="string"?JSON.parse(q.config):(q.config||{});
+      if(q.question_type==="open_text")h+='<textarea data-qid="'+q.id+'" rows="3" placeholder="'+tx("qqPh")+'" style="width:100%;border:1.5px solid rgba(241,144,0,.2);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical">'+v+'</textarea>';
+      else if(q.question_type==="single_choice"&&cfg.options){cfg.options.forEach(function(opt){h+='<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px"><input type="radio" name="qq_'+q.id+'" value="'+opt+'" data-qid="'+q.id+'"'+(v===opt?" checked":"")+' style="accent-color:#f19000">'+opt+'</label>'});}
+      else if(q.question_type==="multi_choice"&&cfg.options){var mv=Array.isArray(v)?v:[];cfg.options.forEach(function(opt){h+='<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px"><input type="checkbox" data-qid="'+q.id+'" value="'+opt+'"'+(mv.indexOf(opt)>=0?" checked":"")+' style="accent-color:#f19000">'+opt+'</label>'});}
+      else if(q.question_type==="scale"){var sv=v||5,mn=cfg.min||1,mx=cfg.max||10;h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:#8e9599">'+mn+'</span><input type="range" data-qid="'+q.id+'" min="'+mn+'" max="'+mx+'" value="'+sv+'" style="flex:1;accent-color:#f19000"><span style="font-size:11px;color:#8e9599">'+mx+'</span><span data-qdisp="'+q.id+'" style="font-size:14px;font-weight:700;color:#474747;min-width:24px;text-align:center">'+sv+'</span></div>';}
+      else if(q.question_type==="dropdown"&&cfg.options){h+='<select data-qid="'+q.id+'" style="width:100%;padding:10px;border:1.5px solid rgba(241,144,0,.2);border-radius:8px;font-size:13px;font-family:inherit"><option value="">'+tx("qqSelect")+'</option>';cfg.options.forEach(function(opt){h+='<option value="'+opt+'"'+(v===opt?" selected":"")+'>'+opt+'</option>'});h+='</select>';}
+      else if(q.question_type==="matrix"&&cfg.rows&&cfg.columns){h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><tr><th></th>';cfg.columns.forEach(function(c){h+='<th style="padding:6px;text-align:center;font-weight:600;color:#8e9599">'+c+'</th>'});h+='</tr>';var mtx=typeof v==="object"&&v?v:{};cfg.rows.forEach(function(r){h+='<tr><td style="padding:6px;font-weight:500">'+r+'</td>';cfg.columns.forEach(function(c){h+='<td style="text-align:center;padding:4px"><input type="radio" name="mtx_'+q.id+'_'+r+'" data-qid="'+q.id+'" data-row="'+r+'" value="'+c+'"'+(mtx[r]===c?" checked":"")+' style="accent-color:#f19000"></td>'});h+='</tr>'});h+='</table></div>';}
+      else h+='<input type="text" data-qid="'+q.id+'" value="'+v+'" placeholder="'+tx("qqPh")+'" style="width:100%;border:1.5px solid rgba(241,144,0,.2);border-radius:8px;padding:10px;font-size:13px;font-family:inherit">';
+      h+='</div>';
+    });
+    h+='<button class="btn btn-gold" id="qq-next"'+(allValid?'':' disabled')+'>'+tx("qqNext")+' \u2192</button></div>';
+    el.innerHTML=h;
+    // Bind events
+    var inputs=el.querySelectorAll("[data-qid]");
+    for(var ii=0;ii<inputs.length;ii++){(function(inp){
+      var qid=inp.getAttribute("data-qid"),qt=inp.tagName;
+      function upd(){
+        if(inp.type==="radio"&&inp.getAttribute("data-row")){var row=inp.getAttribute("data-row");if(!qqResponses[qid]||typeof qqResponses[qid]!=="object")qqResponses[qid]={};qqResponses[qid][row]=inp.value}
+        else if(inp.type==="radio")qqResponses[qid]=inp.value;
+        else if(inp.type==="checkbox"){var arr=Array.isArray(qqResponses[qid])?qqResponses[qid].slice():[];if(inp.checked){if(arr.indexOf(inp.value)<0)arr.push(inp.value)}else{arr=arr.filter(function(v){return v!==inp.value})}qqResponses[qid]=arr}
+        else if(inp.type==="range"){qqResponses[qid]=parseInt(inp.value);var d=document.querySelector('[data-qdisp="'+qid+'"]');if(d)d.textContent=inp.value}
+        else qqResponses[qid]=inp.value;
+        // Recheck validity
+        var av=items.every(function(q){if(!q.required)return true;var r=qqResponses[q.id];return r!=null&&r!==""&&!(Array.isArray(r)&&r.length===0)});
+        document.getElementById("qq-next").disabled=!av;
+      }
+      inp.addEventListener("change",upd);inp.addEventListener("input",upd);
+    })(inputs[ii])}
+    document.getElementById("qq-next").onclick=function(){
+      saveQQResponses(phase);
+      if(currentView==="pre_q"){currentView="triad";render()}
+      else{doShowThanks()}
+    };
+    return;
+  }
+
+  // TRIAD / DYAD
+  if(currentView==="triad"){
+    var te=getTriadEls();var isDyad=elicitMode==="dyad";
+    var needSel=isDyad?1:2;var qTxt=isDyad?tx("dyadQ"):tx("triadQ");var subTxt=isDyad?tx("dyadSub"):tx("triadSub");
+    h='<div class="card wide"><span class="badge">'+tx("roundOf",{c:round+1,t:maxCon})+'</span><h2 style="font-size:18px;font-weight:600;text-align:center">'+qTxt+'</h2><p style="font-size:13px;color:#8e9599;text-align:center">'+subTxt+'</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">';
+    for(var i=0;i<te.length;i++){var e=te[i],iS=sel.indexOf(e.id)>=0;h+='<button class="el-btn'+(iS?" sel":"")+'" data-eid="'+e.id+'"><div class="el-av">'+e.label.charAt(0)+'</div><span style="font-size:14px;font-weight:600">'+e.label+'</span>'+(iS?'<div style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#f19000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">\u2713</div>':'')+'</button>'}
+    h+='</div><button class="btn" id="triad-confirm"'+(sel.length===needSel?"":" disabled")+'>'+tx("confirmSel")+' \u2192</button></div>';
+    el.innerHTML=h;
+    var bs=document.querySelectorAll("[data-eid]");for(var j=0;j<bs.length;j++)bs[j].onclick=function(){var eid=this.getAttribute("data-eid"),idx=sel.indexOf(eid);if(idx>=0)sel.splice(idx,1);else if(sel.length<needSel)sel.push(eid);render()};
+    document.getElementById("triad-confirm").onclick=function(){if(sel.length===needSel)doConfirmSel()};
+    return;
+  }
+
+  // CHAT (elicit, plaus, ladder, opp, fixed)
+  if(currentView==="elicit"||currentView==="plaus"||currentView==="ladder"||currentView==="opp"||currentView==="fixed"){
+    var te=getTriadEls();
+    h='<div class="chat-wrap"><div class="chat-head">\u2726 '+tx("aiName")+(isAI()?' <span style="font-size:8px;background:rgba(241,144,0,.15);padding:1px 6px;border-radius:6px;margin-left:4px">KI</span>':'')+'<span style="margin-left:auto;font-size:10px;color:#8e9599;background:rgba(241,144,0,.04);padding:2px 8px;border-radius:10px">'+(currentView==="fixed"?tx("fixedDim"):tx("constructOf",{c:round+1,t:maxCon}))+'</span></div>';
+    if(currentView!=="fixed"){h+='<div style="display:flex;gap:6px;padding:8px 16px;background:#fafafa;border-bottom:1px solid #e8e8e6;flex-wrap:wrap">';for(var i=0;i<te.length;i++){var iS=sel.indexOf(te[i].id)>=0;h+='<span style="font-size:10px;padding:2px 10px;border-radius:12px;background:'+(iS?"rgba(241,144,0,.1)":"rgba(71,71,71,.05)")+';color:'+(iS?"#d97e00":"#6b7280")+';border:1px solid '+(iS?"rgba(241,144,0,.25)":"transparent")+'">'+te[i].label+'</span>'}h+='</div>'}
+    h+='<div class="chat-msgs" id="chat-msgs">';
+    for(var i=0;i<msgs.length;i++)h+='<div class="msg msg-'+(msgs[i].r==="ai"?"ai":"user")+'">'+msgs[i].t+'</div>';
+    if(sending)h+='<div class="typing-dots"><span></span><span></span><span></span></div>';
+    h+='</div><div class="chat-input"><input id="chat-inp" placeholder="'+tx("typePh")+'"'+(sending?" disabled":"")+'><button id="chat-send"'+(sending?" disabled":"")+'>\u2192</button></div></div>';
+    el.innerHTML=h;
+    var cm=document.getElementById("chat-msgs");if(cm)cm.scrollTop=cm.scrollHeight;
+    var ci=document.getElementById("chat-inp");
+    if(ci&&!sending){setTimeout(function(){ci.focus()},100);ci.onkeydown=function(e){if(e.key==="Enter"&&!sending)doSend()}}
+    if(!sending)document.getElementById("chat-send").onclick=doSend;
+    return;
+  }
+
+  // CONFIRM
+  if(currentView==="confirm"){
+    h='<div class="card"><span class="badge">'+tx("confirmTitle")+'</span><div style="display:flex;gap:12px;width:100%;flex-wrap:wrap;align-items:center;justify-content:center"><div class="pole"><div class="pole-lbl">'+tx("poleA")+'</div><div class="pole-val">'+cur.a+'</div></div><div style="font-size:20px;color:#f19000">\u2194</div><div class="pole"><div class="pole-lbl">'+tx("poleB")+'</div><div class="pole-val">'+cur.b+'</div></div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button id="btn-restart" style="padding:8px 16px;border:1px solid rgba(241,144,0,.2);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:#8e9599;font-family:inherit">'+tx("startOver")+'</button><button class="btn btn-gold" id="btn-confirm-pair">'+tx("confirmCont")+' \u2192</button></div></div>';
+    el.innerHTML=h;
+    document.getElementById("btn-restart").onclick=function(){cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0};msgs=[msgs[0]];currentView="elicit";render()};
+    document.getElementById("btn-confirm-pair").onclick=doConfirmPair;
+    return;
+  }
+
+  // RATE (Tetralemma)
+  if(currentView==="rate"){
+    var cc=cons[rCI];if(!cc){doFinish();return}
+    if(!rats[rCI])rats[rCI]={};var pos=rats[rCI],elL=elements.map(function(e){return e.label}),pl=Object.keys(pos),up=elL.filter(function(l){return pl.indexOf(l)<0}),cE=up[0]||null,ad=up.length===0,p1=cc.a,p2=cc.b;
+    h='<div class="card wide"><span class="badge">'+tx("constructOf",{c:rCI+1,t:cons.length})+'</span><div style="display:flex;gap:12px;width:100%;flex-wrap:wrap;align-items:center;justify-content:center"><div class="pole"><div class="pole-lbl">'+tx("poleA")+'</div><div class="pole-val">'+p1+'</div></div><div style="font-size:20px;color:#f19000">\u2194</div><div class="pole"><div class="pole-lbl">'+tx("poleB")+'</div><div class="pole-val">'+p2+'</div></div></div>';
+
+    // SCALE MODE
+    if(ratingMode==="scale"){
+      h+='<p style="font-size:12px;color:#8e9599;text-align:center">'+tx("scaleInstr")+'</p>';
+      h+='<div style="width:100%;display:flex;flex-direction:column;gap:10px">';
+      elL.forEach(function(lbl){
+        var val=pos[lbl]?pos[lbl].scale:null;
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#fafafa;border-radius:8px;border:1px solid #e8e8e6"><span style="min-width:100px;font-size:13px;font-weight:600;color:#474747">'+lbl+'</span><span style="font-size:10px;color:#8e9599">'+p1+'</span><input type="range" data-scale="'+lbl+'" min="1" max="10" value="'+(val||5)+'" style="flex:1;accent-color:#f19000"><span style="font-size:10px;color:#8e9599">'+p2+'</span><span data-sdisp="'+lbl+'" style="font-size:14px;font-weight:700;min-width:20px;text-align:center;color:#474747">'+(val||"-")+'</span></div>';
+      });
+      h+='</div>';
+      var allRated=elL.every(function(l){return pos[l]&&pos[l].scale!=null});
+      if(allRated)h+='<div style="text-align:center;padding:6px 12px;background:rgba(76,175,80,.08);border-radius:8px;border:1px solid rgba(76,175,80,.2)"><span style="font-size:12px;color:#22c55e;font-weight:600">\u2713 '+tx("scaleDone")+'</span></div>';
+      h+='<button class="btn btn-gold" id="rate-next"'+(allRated?'':' disabled')+'>'+(nextAfterRate==="finish"?tx("finish"):tx("next"))+' \u2192</button></div>';
+      el.innerHTML=h;
+      var sliders=el.querySelectorAll("[data-scale]");for(var si=0;si<sliders.length;si++){(function(sl){sl.oninput=function(){var lbl=this.getAttribute("data-scale"),v=parseInt(this.value);if(!pos[lbl])pos[lbl]={};pos[lbl].scale=v;pos[lbl].x=Math.round(v/10*100);pos[lbl].y=50;var d=document.querySelector('[data-sdisp="'+lbl+'"]');if(d)d.textContent=v;var ar=elL.every(function(l){return pos[l]&&pos[l].scale!=null});document.getElementById("rate-next").disabled=!ar}})(sliders[si])}
+    }
+    // TETRALEMMA MODE (default)
+    else {
+      if(cE)h+='<div style="text-align:center"><p style="font-size:12px;color:#8e9599;margin-bottom:6px">'+(L==="de"?"Jetzt platzieren:":"Now place:")+'</p><span class="tet-current">'+cE+'</span><p style="font-size:11px;color:#8e9599;margin-top:6px">'+(L==="de"?"Noch "+up.length+" von "+elL.length+" \u2014 Klicke ins Feld":up.length+" of "+elL.length+" remaining")+'</p></div>';
+      if(ad)h+='<div style="text-align:center;padding:8px 16px;background:rgba(76,175,80,.08);border-radius:8px;border:1px solid rgba(76,175,80,.2)"><span style="font-size:13px;color:#22c55e;font-weight:600">\u2713 '+(L==="de"?"Alle platziert \u2014 verschieben per Drag":"All placed \u2014 drag to adjust")+'</span></div>';
+      h+='<div style="width:100%;max-width:500px;margin:0 auto"><div style="display:flex;justify-content:space-between;margin-bottom:6px;padding:0 4px"><div style="padding:5px 12px;background:rgba(241,144,0,.08);border-radius:8px;font-size:12px;font-weight:600;color:#d97e00;max-width:45%">'+p1+'</div><div style="padding:5px 12px;background:rgba(71,71,71,.06);border-radius:8px;font-size:12px;font-weight:600;color:#5a6368;max-width:45%;text-align:right">'+p2+'</div></div><div id="tet-field" class="tet-field'+(ad?" complete":"")+'"><div class="tet-cross-v"></div><div class="tet-cross-h"></div><div class="tet-corner" style="top:8px;left:8px">\u2191 '+p1+'</div><div class="tet-corner" style="top:8px;right:8px;text-align:right">\u2191 '+(L==="de"?"beides":"both")+'</div><div class="tet-corner" style="bottom:8px;left:8px">\u2193 '+(L==="de"?"keines":"neither")+'</div><div class="tet-corner" style="bottom:8px;right:8px;text-align:right">\u2193 '+p2+'</div>';
+      for(var lbl in pos)h+='<div class="tet-dot" data-dot="'+lbl+'" style="left:'+pos[lbl].x+'%;bottom:'+pos[lbl].y+'%">'+lbl+'</div>';
+      h+='</div>';if(up.length>1){h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center">';for(var k=1;k<up.length;k++)h+='<span class="tet-queue">'+up[k]+'</span>';h+='</div>'}
+      h+='</div><button class="btn btn-gold" id="rate-next"'+(ad?"":" disabled")+'>'+(nextAfterRate==="finish"?tx("finish"):tx("next"))+' \u2192</button></div>';
+      el.innerHTML=h;
+      var tf=document.getElementById("tet-field");
+      if(tf&&cE)tf.onclick=function(ev){var r=this.getBoundingClientRect();var x=Math.max(2,Math.min(98,((ev.clientX-r.left)/r.width)*100));var y=Math.max(2,Math.min(98,((r.bottom-ev.clientY)/r.height)*100));pos[cE]={x:Math.round(x),y:Math.round(y)};render()};
+      var dots=document.querySelectorAll("[data-dot]");for(var dd=0;dd<dots.length;dd++)(function(dot){function sd(ev){ev.preventDefault();var lbl=dot.getAttribute("data-dot"),fld=document.getElementById("tet-field"),rc=fld.getBoundingClientRect();function mv(e){var cx=e.clientX||(e.touches&&e.touches[0].clientX),cy=e.clientY||(e.touches&&e.touches[0].clientY);var x=Math.max(2,Math.min(98,((cx-rc.left)/rc.width)*100)),y=Math.max(2,Math.min(98,((rc.bottom-cy)/rc.height)*100));pos[lbl]={x:Math.round(x),y:Math.round(y)};dot.style.left=Math.round(x)+"%";dot.style.bottom=Math.round(y)+"%"}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);document.removeEventListener("touchmove",mv);document.removeEventListener("touchend",up)}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);document.addEventListener("touchmove",mv,{passive:false});document.addEventListener("touchend",up)}dot.onmousedown=sd;dot.ontouchstart=sd})(dots[dd]);
+    }
+    document.getElementById("rate-next").onclick=function(){saveRatingsFor(rCI);if(nextAfterRate==="triad"){tIdx++;sel=[];currentView="triad"}else if(nextAfterRate==="fixed"){fdI=0;msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[0].pole})}];currentView="fixed"}else if(nextAfterRate==="nextfixed"){msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[fdI].pole})}];currentView="fixed"}else{doFinish();return}render()};
+    return;
+  }
+
+  // THANKS
+  if(currentView==="thanks"){
+    h='<div class="card"><div style="font-size:48px">\u2713</div><h1 style="font-size:24px;font-weight:700">'+tx("thanks")+'</h1><div class="divider"></div><p style="font-size:14px;color:#8e9599;text-align:center">'+tx("thanksSub")+'</p>';
+    if(cons.length>0){h+='<div style="display:flex;flex-direction:column;gap:6px;width:100%">';for(var i=0;i<cons.length;i++)h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fafafa;border-radius:8px;font-size:13px"><span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f19000,#f5a623);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+(i+1)+'</span>'+cons[i].a+' \u2194 '+cons[i].b+'</div>';h+='</div>'}
+    if(redirectUrl){h+='<p id="redir-msg" style="font-size:12px;color:#f19000;font-weight:600;text-align:center">'+tx("redirect",{s:"5"})+'</p>'}
+    else{h+='<p style="font-size:12px;color:#8e9599;font-style:italic;text-align:center">'+tx("thanksClose")+'</p>'}
+    h+='</div>';
+    el.innerHTML=h;
+    if(redirectUrl){var sec=5;var ri=setInterval(function(){sec--;if(sec<=0){clearInterval(ri);window.location.href=redirectUrl}else{var rm=document.getElementById("redir-msg");if(rm)rm.textContent=tx("redirect",{s:String(sec)})}},1000)}
+    return;
+  }
+}
+
+// ===== ACTIONS =====
+function doConfirmSel(){
+  var te=getTriadEls(),sim=sel.map(function(id){return elements.find(function(e){return e.id===id})}),dif=te.filter(function(e){return sel.indexOf(e.id)<0});
+  cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0};
+  var isDyad=elicitMode==="dyad";
+  if(isAI()){
+    msgs=[];sending=true;render();
+    callAI([],isDyad?"dyad_elicit":"elicit",buildCtx()).then(function(resp){sending=false;msgs=[{r:"ai",t:resp.text}];logChat("ai",resp.text,"elicit");currentView="elicit";render()}).catch(function(){sending=false;msgs=[{r:"ai",t:isDyad?tx("dyadQ"):tx("elicit",{a:sim[0].label,b:sim[1]?sim[1].label:"",c:dif[0]?dif[0].label:""})}];currentView="elicit";render()});
+  } else {
+    if(isDyad){msgs=[{r:"ai",t:tx("dyadQ")+' <b>'+sim[0].label+'</b> vs. <b>'+(te.length>1?te.filter(function(e){return e.id!==sel[0]})[0].label:"")+'</b>'}]}
+    else{msgs=[{r:"ai",t:tx("elicit",{a:sim[0].label,b:sim[1]?sim[1].label:"",c:dif[0]?dif[0].label:""})}]}
+    currentView="elicit";render();
+  }
+  rpc("update_progress",{p_token:token,p_phase:"elicit"}).catch(function(){});
+}
+
+function doSend(){
+  var inp=document.getElementById("chat-inp");if(!inp||!inp.value.trim()||sending)return;
+  var v=inp.value.trim();inp.value="";msgs.push({r:"user",t:v});logChat("user",v,currentView);
+  if(isAI())doSendAI(v);else doSendTpl(v);
+}
+
+// TEMPLATE MODE
+function doSendTpl(v){
+  if(currentView==="elicit"){cur.a=v;if(v.split(/\s+/).length<3){msgs.push({r:"ai",t:tx("plaus",{v:v})});currentView="plaus"}else if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}}
+  else if(currentView==="plaus"){cur.a=v;if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}}
+  else if(currentView==="ladder"){cur.lad.push(v);cur.ladCount++;if(cur.ladCount<ladderRounds){msgs.push({r:"ai",t:tx("ladder",{v:v})})}else{msgs.push({r:"ai",t:tx("opposite",{v:cur.a})});currentView="opp"}}
+  else if(currentView==="opp"){cur.b=v;currentView="confirm"}
+  else if(currentView==="fixed"){doHandleFixed(v);return}
+  render();
+}
+
+// AI MODE
+function doSendAI(v){
+  if(currentView==="elicit"||currentView==="plaus")cur.a=v;
+  else if(currentView==="ladder")cur.lad.push(v);
+  sending=true;render();
+  callAI(msgs,currentView,buildCtx()).then(function(resp){
+    sending=false;var act=resp.action||"continue",txt=resp.text||"",dat=resp.data||{};
+    logChat("ai",txt,currentView);
+    if(act==="accept_pole_a"){if(dat.emergent_pole)cur.a=dat.emergent_pole;else if(!cur.a)cur.a=v;msgs.push({r:"ai",t:txt});if(ladderRounds>0&&cur.ladCount<ladderRounds)currentView="ladder";else currentView="opp"}
+    else if(act==="plausibility_check"){cur.plausCount++;msgs.push({r:"ai",t:txt});if(cur.plausCount>=3){if(!cur.a)cur.a=v;currentView=ladderRounds>0?"ladder":"opp"}else currentView="plaus"}
+    else if(act==="clarify"){cur.clarifyCount++;msgs.push({r:"ai",t:txt});if(cur.clarifyCount>=3){if(currentView==="elicit"||currentView==="plaus"){if(!cur.a)cur.a=v;currentView=ladderRounds>0?"ladder":"opp"}else if(currentView==="opp"){cur.b=v;currentView="confirm"}}}
+    else if(act==="continue_ladder"){cur.ladCount++;if(dat.laddering_note)cur.lad.push(dat.laddering_note);msgs.push({r:"ai",t:txt});currentView="ladder"}
+    else if(act==="ask_opposite"){if(dat.laddering_note)cur.lad.push(dat.laddering_note);if(dat.emergent_pole)cur.a=dat.emergent_pole;msgs.push({r:"ai",t:txt});currentView="opp"}
+    else if(act==="extract_construct"){if(dat.emergent_pole)cur.a=dat.emergent_pole;cur.b=dat.implicit_pole||v;if(txt)msgs.push({r:"ai",t:txt});currentView="confirm"}
+    else if(act==="clarify_opposite"){cur.clarifyCount++;msgs.push({r:"ai",t:txt});if(cur.clarifyCount>=3){cur.b=v;currentView="confirm"}else currentView="opp"}
+    else{if(txt)msgs.push({r:"ai",t:txt})}
+    render();
+  }).catch(function(err){console.error("AI err:",err);sending=false;doSendTpl(v)});
+}
+
+function doHandleFixed(v){
+  var fd=fixedParsed[fdI];
+  if(isAI()){sending=true;render();callAI(msgs,"fixed",buildCtx()).then(function(resp){sending=false;if(resp.action==="extract_construct")saveFixed(fd,(resp.data&&resp.data.implicit_pole)||v);else if(resp.action==="clarify_opposite"){cur.clarifyCount++;if(cur.clarifyCount>=3){saveFixed(fd,v)}else{msgs.push({r:"ai",t:resp.text});render()}}else saveFixed(fd,v)}).catch(function(){sending=false;saveFixed(fd,v)})}
+  else saveFixed(fd,v);
+}
+function saveFixed(fd,pB){var nc={a:fd.pole,b:pB,src:"fixed",id:fd.id};var saveParams={p_token:token,p_element_set_id:sets[0]?sets[0].id:null,p_pole_a:fd.pole,p_pole_b:pB,p_is_fixed:true,p_position:cons.length};nc._saveParams=saveParams;rpc("save_construct",saveParams,3).then(function(r){if(r&&r.construct_id){nc.dbId=r.construct_id;console.log("[RGT] Fixed construct saved:",r.construct_id)}}).catch(function(e){console.warn("[RGT] saveFixed failed, will retry at finish:",e)});cons.push(nc);rCI=cons.length-1;fdI++;nextAfterRate=fdI<fixedParsed.length?"nextfixed":"finish";rpc("update_progress",{p_token:token,p_phase:"rate"}).catch(function(){});currentView="rate";render()}
+
+function doConfirmPair(){
+  var nc={a:cur.a,b:cur.b,src:"elicit",id:"c"+cons.length};
+  var te=getTriadEls(),difEl=te.filter(function(e){return sel.indexOf(e.id)<0})[0];
+  var saveParams={p_token:token,p_element_set_id:sets[tIdx].id,p_pole_a:cur.a,p_pole_b:cur.b,p_similar_ids:JSON.stringify(sel),p_different_id:difEl?difEl.id:null,p_is_fixed:false,p_position:cons.length};
+  nc._saveParams=saveParams;
+  rpc("save_construct",saveParams,3).then(function(r){if(r&&r.construct_id){nc.dbId=r.construct_id;console.log("[RGT] Construct saved:",r.construct_id)}}).catch(function(e){console.warn("[RGT] save_construct failed, will retry at finish:",e)});
+  cons.push(nc);round++;
+  if(round<maxCon&&tIdx+1<sets.length)nextAfterRate="triad";else if(fixedParsed.length>0)nextAfterRate="fixed";else nextAfterRate="finish";
+  rCI=cons.length-1;rpc("update_progress",{p_token:token,p_phase:"rate"}).catch(function(){});currentView="rate";render();
+}
+
+function doFinish(){
+  // Phase 1: Fehlende Konstrukte nachspeichern (3 Retries)
+  var unsaved=cons.filter(function(c){return !c.dbId&&c._saveParams});
+  if(unsaved.length>0)console.log("[RGT] Retrying "+unsaved.length+" unsaved constructs...");
+  var retryPromises=unsaved.map(function(c){
+    return rpc("save_construct",c._saveParams,3).then(function(r){
+      if(r&&r.construct_id){c.dbId=r.construct_id;console.log("[RGT] Retry succeeded:",r.construct_id)}
+    }).catch(function(e){console.error("[RGT] Construct permanently lost:",c.a,"↔",c.b,e)})
+  });
+  Promise.all(retryPromises).then(function(){
+    // Phase 2: Ratings sammeln (nur für Konstrukte mit dbId)
+    var rd=[];var skipped=0;
+    for(var ci=0;ci<cons.length;ci++){if(!rats[ci])continue;var c=cons[ci];
+      if(!c.dbId){skipped++;continue}
+      for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl],q;
+      if(ratingMode==="scale"){rd.push({construct_id:c.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}
+      else{if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="both";else if(p.y<50&&p.x<50)q="neither";else q="pole_b";rd.push({construct_id:c.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}}
+    if(skipped>0)console.warn("[RGT] Skipped ratings for "+skipped+" constructs without dbId");
+    var dur=Math.round((Date.now()-startTime)/1000);
+    // Phase 3: Ratings + Complete speichern (mit Retry)
+    var p1=rd.length>0?rpc("save_ratings",{p_token:token,p_ratings:JSON.stringify(rd)},2).catch(function(e){console.error("[RGT] save_ratings failed:",e)}):Promise.resolve();
+    p1.then(function(){
+      rpc("complete_interview",{p_token:token,p_duration_seconds:dur},2).catch(function(e){console.error("[RGT] complete_interview failed:",e)});
+    });
+    if(hbInterval){clearInterval(hbInterval);hbInterval=null}
+    var postItems=qqItems.filter(function(q){return q.phase==="post"});
+    if(postItems.length>0){currentView="post_q";render()}
+    else{doShowThanks()}
+  });
+}
+function doShowThanks(){currentView="thanks";render()}
+
+// ===== INIT =====
+if(!token){currentView="error";render()}
+else{
+  // Immediately mark as opened for tracking
+  rpc("mark_opened",{p_token:token},2).catch(function(){});
+
+  rpc("get_session",{p_token:token},3).then(function(data){
+  if(data.error){currentView="error";render();return}
+  session=data;study=data.study;elements=data.elements||[];sets=data.sets||[];
+  participant=data.participant||{};
+  qqItems=data.questionnaire_items||[];
+  redirectUrl=study.redirect_url||null;
+
+  try{var fd=typeof study.fixed_dimensions==="string"?JSON.parse(study.fixed_dimensions):(study.fixed_dimensions||[]);fixedParsed=fd.map(function(f,i){return{id:"fd"+i,pole:f.split(" \u2194 ")[0]}})}catch(e){fixedParsed=[]}
+  maxCon=study.max_construct_pairs||5;ladderRounds=study.laddering_rounds||0;ratingMode=study.rating_mode||"tetralemma";
+  elicitMode=study.elicitation_mode||"triad";selMode=study.selection_mode||"select_two";
+  if(study.language==="en")L="en";
+  aiCfg.textMode=study.ai_text_mode||"template";aiCfg.behaviorMode=study.ai_behavior_mode||"mechanical";
+  aiCfg.crossRef=study.ai_cross_ref||"none";aiCfg.crossFreq=study.ai_cross_freq||"mid";
+  aiCfg.tone=study.ai_tone||"formal";aiCfg.ladderDir=study.laddering_direction||"up";
+
+  // Resume: restore existing constructs + ratings
+  var existCons=data.existing_constructs||[];
+  var existRats=data.existing_ratings||[];
+  if(existCons.length>0){
+    console.log("[RGT] Resuming: "+existCons.length+" constructs, "+existRats.length+" ratings");
+    existCons.forEach(function(ec){
+      cons.push({a:ec.pole_a,b:ec.pole_b,src:ec.is_fixed?"fixed":"elicit",id:ec.id,dbId:ec.id});
+    });
+    round=cons.filter(function(c){return c.src==="elicit"}).length;
+    tIdx=Math.min(round,sets.length-1);
+    // Restore ratings grouped by construct
+    existRats.forEach(function(er){
+      var ci=cons.findIndex(function(c){return c.dbId===er.construct_id||c.id===er.construct_id});
+      if(ci<0)return;
+      if(!rats[ci])rats[ci]={};
+      var elObj=elements.find(function(e){return e.id===er.element_id});
+      if(!elObj)return;
+      if(ratingMode==="scale"){rats[ci][elObj.label]={scale:er.scale_value,x:er.pos_x||50,y:50}}
+      else{rats[ci][elObj.label]={x:er.pos_x||50,y:er.pos_y||50}}
+    });
+    rCI=cons.length-1;
+  }
+
+  // Start tracking
+  startHeartbeat();
+  setupAbandon();
+
+  console.log("[RGT] AI:",aiCfg.behaviorMode,"| Ladder:",ladderRounds,"| CrossRef:",aiCfg.crossRef,"| Mode:",elicitMode,"| Rating:",ratingMode,"| Resume:",existCons.length);
+
+  // Determine start view
+  if(participant.status==="done"){currentView="thanks"}
+  else if(existCons.length>0){
+    // Resumed — go to next triad or finish
+    if(round<maxCon&&tIdx<sets.length){currentView="triad"}
+    else if(fixedParsed.length>0&&cons.filter(function(c){return c.src==="fixed"}).length<fixedParsed.length){
+      fdI=cons.filter(function(c){return c.src==="fixed"}).length;
+      msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[fdI].pole})}];currentView="fixed"
+    }
+    else{currentView="thanks"}
+  }
+  else{currentView="welcome"}
+  render();
+}).catch(function(e){console.error("Init:",e);currentView="error";render()})}
+</script>
+</body>
+</html>
