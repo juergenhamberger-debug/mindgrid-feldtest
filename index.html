@@ -133,6 +133,60 @@ function callAI(chatMsgs, phase, ctx) {
   return tryOnce();
 }
 
+// === KONSTRUKT-CHECK A / B ===
+function callCheck(checkType, newTerm, polA, existingDims) {
+  return fetch(SB_URL + "/functions/v1/check-construct", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + SB_KEY },
+    body: JSON.stringify({
+      check_type: checkType,
+      new_term: newTerm,
+      pol_a_term: polA || newTerm,
+      pol_b_term: checkType === "pol_b" ? newTerm : "",
+      existing_dimensions: existingDims,
+      study_topic: study ? (study.topic || study.title || "") : "",
+      elements: elements.map(function(e) { return e.label; }),
+      language: L
+    })
+  }).then(function(r) {
+    if (!r.ok) throw new Error("Check " + r.status);
+    return r.json();
+  }).catch(function(err) {
+    console.warn("[RGT] Check failed, proceeding:", err);
+    return { action: "proceed", quality_flags: {}, problem_type: null, question: null, score_contribution: 1 };
+  });
+}
+
+function calcQualityScore(fA, fB, ptA, ptB) {
+  var s = 0;
+  // Bipolarität (Kriterium 1)
+  var b = (fB && fB.bipolar) || "ok", t = (fB && fB.tautology) || "ok";
+  if (b === "ok" && t === "ok" && ptB !== "P1" && ptB !== "P2") s += 2;
+  else if (b !== "fail" && t !== "fail") s += 1;
+  // Klarheit (Kriterium 2)
+  var cA = (fA && fA.clarity) || "ok", cB = (fB && fB.clarity) || "ok";
+  if (cA === "ok" && cB === "ok") s += 2; else if (cA !== "fail" && cB !== "fail") s += 1;
+  // Diskriminationskraft (Kriterium 3) — Platzhalter, wird nach Rating aktualisiert
+  s += 1;
+  // Relevanz (Kriterium 4)
+  var rA = (fA && fA.relevance) || "ok", rB = (fB && fB.relevance) || "ok";
+  if (rA === "ok" && rB === "ok") s += 2; else if (rA !== "fail" && rB !== "fail") s += 1;
+  // Idiografische Sprache (Kriterium 5)
+  var jarg = ptA === "P5" || ptA === "P8" || ptB === "P5" || ptB === "P8";
+  if (!jarg && cA !== "risk" && cB !== "risk") s += 2; else if (!jarg) s += 1;
+  // Nicht-Redundanz (Kriterium 6)
+  var red = (fB && fB.redundancy) || "ok";
+  if (red === "ok" && ptB !== "P9") s += 2; else if (red !== "fail" && ptB !== "P9") s += 1;
+  return Math.min(s, 12);
+}
+
+function scoreToFlag(score) {
+  if (score >= 10) return "green";
+  if (score >= 7)  return "yellow";
+  if (score >= 4)  return "orange";
+  return "red";
+}
+
 // === TRACKING ===
 function startHeartbeat() {
   if (hbInterval) clearInterval(hbInterval);
@@ -160,7 +214,14 @@ function saveQQResponses(phase) {
 
 // === STATE ===
 var L="de", session=null, currentView="loading", round=0, tIdx=0, sel=[], cons=[];
-var cur = { a:"", b:"", lad:[], ladCount:0, plausCount:0, clarifyCount:0 };
+var cur = { a:"", b:"", lad:[], ladCount:0, plausCount:0, clarifyCount:0,
+  origA:"", origB:"",
+  checkADone:false, checkBDone:false,
+  checkAFlags:null, checkBFlags:null,
+  checkAProblem:null, checkBProblem:null,
+  checkAScore:1, checkBScore:1,
+  clarificationAsked:false
+};
 var rats={}, rCI=0, fdI=0, msgs=[], consentOk=false, startTime=Date.now();
 var nextAfterRate="triad", study=null, elements=[], sets=[], fixedParsed=[];
 var maxCon=5, ladderRounds=0, ratingMode="tetralemma", sending=false;
@@ -240,7 +301,37 @@ function getTriadEls(){var s=sets[tIdx];if(!s)return[];var ids;try{ids=typeof s.
 function isAI(){return aiCfg.behaviorMode==="ai"}
 function buildCtx(){var te=getTriadEls(),sl=sel.map(function(id){var e=elements.find(function(el){return el.id===id});return e?e.label:""}),dl=te.filter(function(e){return sel.indexOf(e.id)<0});return{triad_labels:te.map(function(e){return e.label}),similar_labels:sl,different_label:dl.length>0?dl[0].label:"",current_pole_a:cur.a,laddering_count:cur.ladCount,constructs:cons.map(function(c){return{a:c.a,b:c.b}}),fixed_pole:fixedParsed[fdI]?fixedParsed[fdI].pole:""}}
 function logChat(role,text,phase){rpc("log_interview_event",{p_token:token,p_event_type:role==="ai"?"ai_message":"user_message",p_phase:phase||currentView,p_payload:JSON.stringify({text:(text||"").substring(0,500)})}).catch(function(){})}
-function saveRatingsFor(ci){var cc=cons[ci];if(!cc||!rats[ci]||!cc.dbId)return;var rd=[];for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl];if(ratingMode==="scale"){rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}else{var q;if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="pole_b";else if(p.y<50&&p.x<50)q="neither";else q="both";rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}if(rd.length>0)rpc("save_ratings",{p_token:token,p_ratings:JSON.stringify(rd)},2).catch(function(e){console.warn("[RGT] saveRatingsFor failed:",e)})}
+function saveRatingsFor(ci){
+  var cc=cons[ci];if(!cc||!rats[ci]||!cc.dbId)return;
+
+  // Monadik-Erkennung (P3): alle/fast alle Elemente gleich bewertet
+  var ratVals=[];
+  for(var lbl in rats[ci]){
+    var p=rats[ci][lbl];
+    ratVals.push(ratingMode==="scale"?p.scale:(p.y>=50?1:0));
+  }
+  if(ratVals.length>0&&cc.qualScore!=null){
+    var uniqueVals={};for(var vi=0;vi<ratVals.length;vi++)uniqueVals[ratVals[vi]]=1;
+    var distinctCount=Object.keys(uniqueVals).length;
+    var isMonadic=distinctCount===1&&ratVals.length>=Math.max(2,Math.floor(elements.length*0.8));
+    // Diskriminationswert (Kriterium 3): Platzhalter (1) durch echten Wert ersetzen
+    var discScore=distinctCount>=3?2:(distinctCount>=2?1:0);
+    var updatedScore=Math.min(12,cc.qualScore-1+discScore); // -1 Platzhalter, +echter Wert
+    if(isMonadic){updatedScore=Math.max(0,updatedScore-2);} // monadisch bestraft zusätzlich
+    cc.qualScore=updatedScore;cc.qualFlag=scoreToFlag(updatedScore);
+    rpc("update_construct_quality",{
+      p_construct_id:cc.dbId,
+      p_quality_flag:cc.qualFlag,
+      p_quality_score:cc.qualScore,
+      p_is_monadic:isMonadic
+    }).catch(function(e){console.warn("[RGT] monadic update failed:",e)});
+    console.log("[RGT] Quality updated after rating: "+cc.qualFlag+" ("+cc.qualScore+"/12)"+(isMonadic?" [MONADISCH]":""));
+  }
+
+  var rd=[];if(!cc||!rats[ci]||!cc.dbId)return;
+  for(var lbl in rats[ci]){var el=elements.find(function(e){return e.label===lbl});if(!el)continue;var p=rats[ci][lbl];if(ratingMode==="scale"){rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:null,pos_x:null,pos_y:null,scale_value:p.scale||5})}else{var q;if(p.y>=50&&p.x<50)q="pole_a";else if(p.y>=50&&p.x>=50)q="pole_b";else if(p.y<50&&p.x<50)q="neither";else q="both";rd.push({construct_id:cc.dbId,element_id:el.id,tetralemma:q,pos_x:p.x,pos_y:p.y})}}
+  if(rd.length>0)rpc("save_ratings",{p_token:token,p_ratings:JSON.stringify(rd)},2).catch(function(e){console.warn("[RGT] saveRatingsFor failed:",e)})
+}
 
 document.getElementById("hdr-lang").addEventListener("click",function(){L=L==="de"?"en":"de";this.textContent=L==="de"?"EN":"DE";render()});
 
@@ -344,7 +435,7 @@ function render(){
   }
 
   // CHAT (elicit, plaus, ladder, opp, fixed)
-  if(currentView==="elicit"||currentView==="plaus"||currentView==="ladder"||currentView==="opp"||currentView==="fixed"){
+  if(currentView==="elicit"||currentView==="plaus"||currentView==="ladder"||currentView==="opp"||currentView==="fixed"||currentView==="check_clarify_a"||currentView==="check_clarify_b"){
     var te=getTriadEls();
     h='<div class="chat-wrap"><div class="chat-head">\u2726 '+tx("aiName")+(isAI()?' <span style="font-size:8px;background:rgba(241,144,0,.15);padding:1px 6px;border-radius:6px;margin-left:4px">KI</span>':'')+'<span style="margin-left:auto;font-size:10px;color:#8e9599;background:rgba(241,144,0,.04);padding:2px 8px;border-radius:10px">'+(currentView==="fixed"?tx("fixedDim"):tx("constructOf",{c:round+1,t:maxCon}))+'</span></div>';
     if(currentView!=="fixed"){h+='<div style="display:flex;gap:6px;padding:8px 16px;background:#fafafa;border-bottom:1px solid #e8e8e6;flex-wrap:wrap">';for(var i=0;i<te.length;i++){var iS=sel.indexOf(te[i].id)>=0;h+='<span style="font-size:10px;padding:2px 10px;border-radius:12px;background:'+(iS?"rgba(241,144,0,.1)":"rgba(71,71,71,.05)")+';color:'+(iS?"#d97e00":"#6b7280")+';border:1px solid '+(iS?"rgba(241,144,0,.25)":"transparent")+'">'+te[i].label+'</span>'}h+='</div>'}
@@ -364,7 +455,7 @@ function render(){
   if(currentView==="confirm"){
     h='<div class="card"><span class="badge">'+tx("confirmTitle")+'</span><div style="display:flex;gap:12px;width:100%;flex-wrap:wrap;align-items:center;justify-content:center"><div class="pole"><div class="pole-lbl">'+tx("poleA")+'</div><div class="pole-val">'+cur.a+'</div></div><div style="font-size:20px;color:#f19000">\u2194</div><div class="pole"><div class="pole-lbl">'+tx("poleB")+'</div><div class="pole-val">'+cur.b+'</div></div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button id="btn-restart" style="padding:8px 16px;border:1px solid rgba(241,144,0,.2);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:#8e9599;font-family:inherit">'+tx("startOver")+'</button><button class="btn btn-gold" id="btn-confirm-pair">'+tx("confirmCont")+' \u2192</button></div></div>';
     el.innerHTML=h;
-    document.getElementById("btn-restart").onclick=function(){cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0};msgs=[msgs[0]];currentView="elicit";render()};
+    document.getElementById("btn-restart").onclick=function(){cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0,origA:"",origB:"",checkADone:false,checkBDone:false,checkAFlags:null,checkBFlags:null,checkAProblem:null,checkBProblem:null,checkAScore:1,checkBScore:1,clarificationAsked:false};msgs=[msgs[0]];currentView="elicit";render()};
     document.getElementById("btn-confirm-pair").onclick=doConfirmPair;
     return;
   }
@@ -423,7 +514,7 @@ function render(){
 // ===== ACTIONS =====
 function doConfirmSel(){
   var te=getTriadEls(),sim=sel.map(function(id){return elements.find(function(e){return e.id===id})}),dif=te.filter(function(e){return sel.indexOf(e.id)<0});
-  cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0};
+  cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0,origA:"",origB:"",checkADone:false,checkBDone:false,checkAFlags:null,checkBFlags:null,checkAProblem:null,checkBProblem:null,checkAScore:1,checkBScore:1,clarificationAsked:false};
   var isDyad=elicitMode==="dyad";
   if(isAI()){
     msgs=[];sending=true;render();
@@ -439,11 +530,61 @@ function doConfirmSel(){
 function doSend(){
   var inp=document.getElementById("chat-inp");if(!inp||!inp.value.trim()||sending)return;
   var v=inp.value.trim();inp.value="";msgs.push({r:"user",t:v});logChat("user",v,currentView);
+
+  // === CHECK A (elicit, erste Eingabe) ===
+  if(currentView==="elicit"&&!cur.checkADone){
+    cur.origA=v;
+    var exDims=cons.map(function(c){return{pol_a:c.a,pol_b:c.b}});
+    sending=true;render();
+    callCheck("pol_a",v,v,exDims).then(function(chk){
+      sending=false;
+      cur.checkAFlags=chk.quality_flags;cur.checkAProblem=chk.problem_type;cur.checkAScore=chk.score_contribution||1;
+      cur.checkADone=true;
+      if(chk.action==="clarify"&&chk.question){
+        cur.a=v;cur.clarificationAsked=true;
+        msgs.push({r:"ai",t:chk.question});currentView="check_clarify_a";render();
+      } else {
+        if(isAI())doSendAI(v);else doSendTpl(v);
+      }
+    });
+    return;
+  }
+
+  // === CHECK B (opp, erste Eingabe) ===
+  if(currentView==="opp"&&!cur.checkBDone){
+    cur.origB=v;
+    var exDims=cons.map(function(c){return{pol_a:c.a,pol_b:c.b}});
+    sending=true;render();
+    callCheck("pol_b",v,cur.a,exDims).then(function(chk){
+      sending=false;
+      cur.checkBFlags=chk.quality_flags;cur.checkBProblem=chk.problem_type;cur.checkBScore=chk.score_contribution||1;
+      cur.checkBDone=true;
+      if(chk.action==="clarify"&&chk.question){
+        cur.b=v;cur.clarificationAsked=true;
+        msgs.push({r:"ai",t:chk.question});currentView="check_clarify_b";render();
+      } else {
+        if(isAI())doSendAI(v);else doSendTpl(v);
+      }
+    });
+    return;
+  }
+
   if(isAI())doSendAI(v);else doSendTpl(v);
 }
 
 // TEMPLATE MODE
 function doSendTpl(v){
+  // Nach Check A Klärung: clarifizierten Begriff übernehmen, weiter
+  if(currentView==="check_clarify_a"){
+    cur.a=v;
+    if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}
+    else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}
+    render();return;
+  }
+  // Nach Check B Klärung: clarifizierten Begriff übernehmen, weiter
+  if(currentView==="check_clarify_b"){
+    cur.b=v;currentView="confirm";render();return;
+  }
   if(currentView==="elicit"){cur.a=v;if(v.split(/\s+/).length<3){msgs.push({r:"ai",t:tx("plaus",{v:v})});currentView="plaus"}else if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}}
   else if(currentView==="plaus"){cur.a=v;if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}}
   else if(currentView==="ladder"){cur.lad.push(v);cur.ladCount++;if(cur.ladCount<ladderRounds){msgs.push({r:"ai",t:tx("ladder",{v:v})})}else{msgs.push({r:"ai",t:tx("opposite",{v:cur.a})});currentView="opp"}}
@@ -454,6 +595,23 @@ function doSendTpl(v){
 
 // AI MODE
 function doSendAI(v){
+  // Nach Check A Klärung im AI-Modus: Begriff übernehmen, AI-Call fortsetzen
+  if(currentView==="check_clarify_a"){
+    cur.a=v;
+    sending=true;render();
+    callAI(msgs,"elicit",buildCtx()).then(function(resp){
+      sending=false;var act=resp.action||"continue",txt=resp.text||"",dat=resp.data||{};
+      logChat("ai",txt,"elicit");
+      if(act==="accept_pole_a"||act==="continue"){if(dat.emergent_pole)cur.a=dat.emergent_pole;msgs.push({r:"ai",t:txt||tx("opposite",{v:cur.a})});if(ladderRounds>0&&cur.ladCount<ladderRounds)currentView="ladder";else currentView="opp"}
+      else{msgs.push({r:"ai",t:txt});if(ladderRounds>0)currentView="ladder";else currentView="opp"}
+      render();
+    }).catch(function(){sending=false;msgs.push({r:"ai",t:tx("opposite",{v:cur.a})});currentView="opp";render()});
+    return;
+  }
+  // Nach Check B Klärung: Begriff übernehmen, confirm
+  if(currentView==="check_clarify_b"){
+    cur.b=v;currentView="confirm";render();return;
+  }
   if(currentView==="elicit"||currentView==="plaus")cur.a=v;
   else if(currentView==="ladder")cur.lad.push(v);
   sending=true;render();
@@ -480,11 +638,39 @@ function doHandleFixed(v){
 function saveFixed(fd,pB){var nc={a:fd.pole,b:pB,src:"fixed",id:fd.id};var saveParams={p_token:token,p_element_set_id:sets[0]?sets[0].id:null,p_pole_a:fd.pole,p_pole_b:pB,p_is_fixed:true,p_position:cons.length};nc._saveParams=saveParams;rpc("save_construct",saveParams,3).then(function(r){if(r&&r.construct_id){nc.dbId=r.construct_id;console.log("[RGT] Fixed construct saved:",r.construct_id)}}).catch(function(e){console.warn("[RGT] saveFixed failed, will retry at finish:",e)});cons.push(nc);rCI=cons.length-1;fdI++;nextAfterRate=fdI<fixedParsed.length?"nextfixed":"finish";rpc("update_progress",{p_token:token,p_phase:"rate"}).catch(function(){});currentView="rate";render()}
 
 function doConfirmPair(){
-  var nc={a:cur.a,b:cur.b,src:"elicit",id:"c"+cons.length};
+  // Qualitätsscore berechnen
+  var qScore=calcQualityScore(cur.checkAFlags,cur.checkBFlags,cur.checkAProblem,cur.checkBProblem);
+  var qFlag=scoreToFlag(qScore);
+  var nc={a:cur.a,b:cur.b,src:"elicit",id:"c"+cons.length,
+    origA:cur.origA||cur.a,origB:cur.origB||cur.b,
+    qualScore:qScore,qualFlag:qFlag,
+    checkAFlags:cur.checkAFlags,checkBFlags:cur.checkBFlags,
+    checkAProblem:cur.checkAProblem,checkBProblem:cur.checkBProblem,
+    clarificationAsked:cur.clarificationAsked};
   var te=getTriadEls(),difEl=te.filter(function(e){return sel.indexOf(e.id)<0})[0];
   var saveParams={p_token:token,p_element_set_id:sets[tIdx].id,p_pole_a:cur.a,p_pole_b:cur.b,p_similar_ids:JSON.stringify(sel),p_different_id:difEl?difEl.id:null,p_is_fixed:false,p_position:cons.length};
   nc._saveParams=saveParams;
-  rpc("save_construct",saveParams,3).then(function(r){if(r&&r.construct_id){nc.dbId=r.construct_id;console.log("[RGT] Construct saved:",r.construct_id)}}).catch(function(e){console.warn("[RGT] save_construct failed, will retry at finish:",e)});
+  rpc("save_construct",saveParams,3).then(function(r){
+    if(r&&r.construct_id){
+      nc.dbId=r.construct_id;
+      console.log("[RGT] Construct saved:",r.construct_id,"quality:",qFlag,qScore);
+      rpc("update_construct_quality",{
+        p_construct_id:r.construct_id,
+        p_quality_flag:nc.qualFlag,
+        p_quality_score:nc.qualScore,
+        p_quality_flags_a:nc.checkAFlags?JSON.stringify(nc.checkAFlags):null,
+        p_quality_flags_b:nc.checkBFlags?JSON.stringify(nc.checkBFlags):null,
+        p_original_term_a:nc.origA,
+        p_elicited_term_a:nc.a,
+        p_original_term_b:nc.origB,
+        p_elicited_term_b:nc.b,
+        p_problem_type_a:nc.checkAProblem,
+        p_problem_type_b:nc.checkBProblem,
+        p_clarification_asked:nc.clarificationAsked,
+        p_is_monadic:false
+      }).catch(function(e){console.warn("[RGT] update_construct_quality failed:",e)});
+    }
+  }).catch(function(e){console.warn("[RGT] save_construct failed, will retry at finish:",e)});
   cons.push(nc);round++;
   if(round<maxCon&&tIdx+1<sets.length)nextAfterRate="triad";else if(fixedParsed.length>0)nextAfterRate="fixed";else nextAfterRate="finish";
   rCI=cons.length-1;rpc("update_progress",{p_token:token,p_phase:"rate"}).catch(function(){});currentView="rate";render();
