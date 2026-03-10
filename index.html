@@ -761,13 +761,26 @@ else{
   // Determine start view
   if(participant.status==="done"){currentView="thanks"}
   else if(existCons.length>0){
-    // Resumed — go to next triad or finish
-    if(round<maxCon&&tIdx<sets.length){currentView="triad"}
-    else if(fixedParsed.length>0&&cons.filter(function(c){return c.src==="fixed"}).length<fixedParsed.length){
+    // Check if last construct has ratings — if not, resume at rating
+    var lastC=cons[cons.length-1];
+    var lastHasRatings=lastC&&rats[cons.length-1]&&Object.keys(rats[cons.length-1]).length>0;
+    var allRatedCount=cons.filter(function(c,i){return rats[i]&&Object.keys(rats[i]).length>=elements.length}).length;
+    if(allRatedCount<cons.length){
+      // Some constructs have no or incomplete ratings — resume at rating
+      rCI=allRatedCount;
+      // Set nextAfterRate correctly
+      if(round<maxCon&&tIdx<sets.length)nextAfterRate="triad";
+      else if(fixedParsed.length>0&&cons.filter(function(c){return c.src==="fixed"}).length<fixedParsed.length)nextAfterRate="fixed";
+      else nextAfterRate="finish";
+      currentView="rate";
+      msgs.push({r:"ai",t:tx("resumeInfo")});
+    } else if(round<maxCon&&tIdx<sets.length){
+      currentView="triad";
+      msgs.push({r:"ai",t:tx("resumeInfo")});
+    } else if(fixedParsed.length>0&&cons.filter(function(c){return c.src==="fixed"}).length<fixedParsed.length){
       fdI=cons.filter(function(c){return c.src==="fixed"}).length;
-      msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[fdI].pole})}];currentView="fixed"
-    }
-    else{currentView="thanks"}
+      msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[fdI].pole})}];currentView="fixed";
+    } else{currentView="thanks"}
   }
   else{currentView="welcome"}
   render();
