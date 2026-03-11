@@ -231,7 +231,6 @@ var nextAfterRate="triad", study=null, elements=[], sets=[], fixedParsed=[];
 var maxCon=5, ladderRounds=0, ratingMode="tetralemma", sending=false;
 var elicitMode="triad", selMode="select_two", redirectUrl=null;
 var participant=null, qqItems=[], qqResponses={}, hbInterval=null;
-var triadReady=false;
 var aiCfg = { textMode:"template", behaviorMode:"mechanical", crossRef:"none", crossFreq:"mid", tone:"formal", ladderDir:"up" };
 
 // === i18n ===
@@ -397,7 +396,7 @@ function render(){
     h='<div class="card"><h2 style="font-size:20px;font-weight:600;text-align:center">'+tx("consentTitle")+'</h2><div class="divider"></div><div style="background:#fafafa;border-radius:10px;padding:16px 18px;border:1px solid #e8e8e6;font-size:13px;color:#6b7280;line-height:1.7">'+tx("consentP")+'</div><label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="consent-cb" style="accent-color:#f19000;width:18px;height:18px"'+(consentOk?" checked":"")+'>'+tx("consentAgree")+'</label><button class="btn" id="consent-btn"'+(consentOk?"":" disabled")+'>'+tx("cont")+' \u2192</button></div>';
     el.innerHTML=h;
     document.getElementById("consent-cb").onchange=function(){consentOk=this.checked;document.getElementById("consent-btn").disabled=!consentOk};
-    document.getElementById("consent-btn").onclick=function(){if(consentOk){var preItems=qqItems.filter(function(q){return q.phase==="pre"});triadReady=false;currentView=preItems.length>0?"pre_q":"triad_chat";render()}};
+    document.getElementById("consent-btn").onclick=function(){if(consentOk){var preItems=qqItems.filter(function(q){return q.phase==="pre"});currentView=preItems.length>0?"pre_q":"triad_chat";render()}};
     return;
   }
 
@@ -454,7 +453,7 @@ function render(){
     })(qqMics[mi])}
     document.getElementById("qq-next").onclick=function(){
       saveQQResponses(phase);
-      if(currentView==="pre_q"){triadReady=false;currentView="triad_chat";render()}
+      if(currentView==="pre_q"){currentView="triad_chat";render()}
       else{doShowThanks()}
     };
     return;
@@ -465,26 +464,19 @@ function render(){
   if(currentView==="triad_chat"){
     var te=getTriadEls();var isDyad=elicitMode==="dyad";
     var needSel=isDyad?1:2;
-    var introMsg=tx("triadIntro");
+    var introMsg=(L==="en"?study.intro_text_en:study.intro_text_de)||tx("triadIntro");
     var subTxt=isDyad?tx("dyadSub"):tx("triadSub");
     h='<div class="chat-wrap"><div class="chat-head">\u2726 '+tx("aiName")+'<span style="margin-left:auto;font-size:10px;color:#8e9599;background:rgba(241,144,0,.04);padding:2px 8px;border-radius:10px">'+tx("roundOf",{c:round+1,t:maxCon})+'</span></div>';
-    h+='<div class="chat-msgs" id="chat-msgs"><div class="msg msg-ai">'+introMsg+'</div>';
-    if(!triadReady){h+='<div class="typing-dots"><span></span><span></span><span></span></div>';}
-    h+='</div>';
-    if(triadReady){
-      h+='<div style="padding:12px 16px;border-top:1px solid #e8e8e6"><p style="font-size:12px;color:#8e9599;margin:0 0 8px;text-align:center">'+tx("triadQ")+'<br><span style="font-size:11px">'+subTxt+'</span></p>';
-      h+='<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">';
-      for(var i=0;i<te.length;i++){var e=te[i],iS=sel.indexOf(e.id)>=0;h+='<button class="el-btn'+(iS?' sel':'')+'" data-eid="'+e.id+'"><div class="el-av">'+e.label.charAt(0)+'</div><span style="font-size:14px;font-weight:600">'+e.label+'</span>'+(iS?'<div style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#f19000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">\u2713</div>':'')+'</button>'}
-      h+='</div><button class="btn" id="triad-confirm"'+(sel.length===needSel?"":" disabled")+'>'+tx("confirmSel")+' \u2192</button></div>';
-    }
-    h+='</div>';
+    h+='<div class="chat-msgs" id="chat-msgs"><div class="msg msg-ai">'+introMsg+'</div></div>';
+    h+='<div style="padding:12px 16px;border-top:1px solid #e8e8e6">';
+    h+='<p style="font-size:12px;color:#8e9599;margin:0 0 8px;text-align:center">'+tx("triadQ")+'<br><span style="font-size:11px">'+subTxt+'</span></p>';
+    h+='<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">';
+    for(var i=0;i<te.length;i++){var e=te[i],iS=sel.indexOf(e.id)>=0;h+='<button class="el-btn'+(iS?" sel":"")+'" data-eid="'+e.id+'"><div class="el-av">'+e.label.charAt(0)+'</div><span style="font-size:14px;font-weight:600">'+e.label+'</span>'+(iS?'<div style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#f19000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px">\u2713</div>':'')+'</button>'}
+    h+='</div><button class="btn" id="triad-confirm"'+(sel.length===needSel?"":" disabled")+'>'+tx("confirmSel")+' \u2192</button></div></div>';
     el.innerHTML=h;
     var cm=document.getElementById("chat-msgs");if(cm)cm.scrollTop=cm.scrollHeight;
-    if(!triadReady){setTimeout(function(){triadReady=true;render();},1500);}
-    if(triadReady){
-      var bs=document.querySelectorAll("[data-eid]");for(var j=0;j<bs.length;j++)bs[j].onclick=function(){var eid=this.getAttribute("data-eid"),idx=sel.indexOf(eid);if(idx>=0)sel.splice(idx,1);else if(sel.length<needSel)sel.push(eid);render()};
-      document.getElementById("triad-confirm").onclick=function(){if(sel.length===needSel)doConfirmSel()};
-    }
+    var bs=document.querySelectorAll("[data-eid]");for(var j=0;j<bs.length;j++)bs[j].onclick=function(){var eid=this.getAttribute("data-eid"),idx=sel.indexOf(eid);if(idx>=0)sel.splice(idx,1);else if(sel.length<needSel)sel.push(eid);render()};
+    document.getElementById("triad-confirm").onclick=function(){if(sel.length===needSel)doConfirmSel()};
     return;
   }
 
@@ -523,7 +515,7 @@ function render(){
   if(currentView==="confirm"){
     h='<div class="card"><span class="badge">'+tx("confirmTitle")+'</span><div style="display:flex;gap:12px;width:100%;flex-wrap:wrap;align-items:center;justify-content:center"><div class="pole"><div class="pole-lbl">'+tx("poleA")+'</div><div class="pole-val">'+cur.a+'</div></div><div style="font-size:20px;color:#f19000">\u2194</div><div class="pole"><div class="pole-lbl">'+tx("poleB")+'</div><div class="pole-val">'+cur.b+'</div></div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button id="btn-restart" style="padding:8px 16px;border:1px solid rgba(241,144,0,.2);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:#8e9599;font-family:inherit">'+tx("startOver")+'</button><button class="btn btn-gold" id="btn-confirm-pair">'+tx("confirmCont")+' \u2192</button></div></div>';
     el.innerHTML=h;
-    document.getElementById("btn-restart").onclick=function(){cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0,origA:"",origB:"",checkADone:false,checkBDone:false,checkAFlags:null,checkBFlags:null,checkAProblem:null,checkBProblem:null,checkAScore:1,checkBScore:1,clarificationAsked:false};msgs=[msgs[0]];currentView="elicit";render()};
+    document.getElementById("btn-restart").onclick=function(){cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0,origA:"",origB:"",origB2:"",checkADone:false,checkBDone:false,checkAFlags:null,checkBFlags:null,checkAProblem:null,checkBProblem:null,checkAScore:1,checkBScore:1,checkB2Score:0,clarificationAsked:false};msgs=[msgs[0]];currentView="elicit";render()};
     document.getElementById("btn-confirm-pair").onclick=doConfirmPair;
     return;
   }
@@ -562,7 +554,7 @@ function render(){
       if(tf&&cE)tf.onclick=function(ev){var r=this.getBoundingClientRect();var x=Math.max(2,Math.min(98,((ev.clientX-r.left)/r.width)*100));var y=Math.max(2,Math.min(98,((r.bottom-ev.clientY)/r.height)*100));pos[cE]={x:Math.round(x),y:Math.round(y)};render()};
       var dots=document.querySelectorAll("[data-dot]");for(var dd=0;dd<dots.length;dd++)(function(dot){function sd(ev){ev.preventDefault();var lbl=dot.getAttribute("data-dot"),fld=document.getElementById("tet-field"),rc=fld.getBoundingClientRect();function mv(e){var cx=e.clientX||(e.touches&&e.touches[0].clientX),cy=e.clientY||(e.touches&&e.touches[0].clientY);var x=Math.max(2,Math.min(98,((cx-rc.left)/rc.width)*100)),y=Math.max(2,Math.min(98,((rc.bottom-cy)/rc.height)*100));pos[lbl]={x:Math.round(x),y:Math.round(y)};dot.style.left=Math.round(x)+"%";dot.style.bottom=Math.round(y)+"%"}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);document.removeEventListener("touchmove",mv);document.removeEventListener("touchend",up)}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);document.addEventListener("touchmove",mv,{passive:false});document.addEventListener("touchend",up)}dot.onmousedown=sd;dot.ontouchstart=sd})(dots[dd]);
     }
-    document.getElementById("rate-next").onclick=function(){saveRatingsFor(rCI);if(nextAfterRate==="triad"){tIdx++;sel=[];triadReady=false;currentView="triad_chat"}else if(nextAfterRate==="fixed"){fdI=0;msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[0].pole})}];currentView="fixed"}else if(nextAfterRate==="nextfixed"){msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[fdI].pole})}];currentView="fixed"}else{doFinish();return}render()};
+    document.getElementById("rate-next").onclick=function(){saveRatingsFor(rCI);if(nextAfterRate==="triad"){tIdx++;sel=[];currentView="triad_chat"}else if(nextAfterRate==="fixed"){fdI=0;msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[0].pole})}];currentView="fixed"}else if(nextAfterRate==="nextfixed"){msgs=[{r:"ai",t:tx("fixedP",{p:fixedParsed[fdI].pole})}];currentView="fixed"}else{doFinish();return}render()};
     return;
   }
 
@@ -582,7 +574,7 @@ function render(){
 // ===== ACTIONS =====
 function doConfirmSel(){
   var te=getTriadEls(),sim=sel.map(function(id){return elements.find(function(e){return e.id===id})}),dif=te.filter(function(e){return sel.indexOf(e.id)<0});
-  cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0,origA:"",origB:"",checkADone:false,checkBDone:false,checkAFlags:null,checkBFlags:null,checkAProblem:null,checkBProblem:null,checkAScore:1,checkBScore:1,clarificationAsked:false};
+  cur={a:"",b:"",lad:[],ladCount:0,plausCount:0,clarifyCount:0,origA:"",origB:"",origB2:"",checkADone:false,checkBDone:false,checkAFlags:null,checkBFlags:null,checkAProblem:null,checkBProblem:null,checkAScore:1,checkBScore:1,checkB2Score:0,clarificationAsked:false};
   var isDyad=elicitMode==="dyad";
   if(isAI()){
     msgs=[];sending=true;render();
@@ -618,11 +610,33 @@ function doSend(){
     return;
   }
 
-  // After check_clarify_b: cur.b already saved, just confirm
-  if(currentView==="check_clarify_b"&&cur.b){
-    // The clarification answer is noted but cur.b stays as first opp answer
-    if(v.trim().length>1&&v.trim().length<cur.b.length*3){cur.b=v;} // only override if shorter/clearer
-    currentView="confirm";render();return;
+  // After check_clarify_b: check 2nd answer, AI picks better, store both in lad
+  if(currentView==="check_clarify_b"){
+    cur.origB2=v;
+    var exDims2=cons.map(function(c){return{pol_a:c.a,pol_b:c.b}});
+    sending=true;render();
+    callCheck("pol_b",v,cur.a,exDims2).then(function(chk2){
+      sending=false;
+      cur.checkB2Score=chk2.score_contribution||0;
+      // Store both attempts as side info in lad
+      if(cur.origB&&cur.origB!==v){
+        cur.lad.push({type:"pol_b_clarification",attempt1:cur.origB,attempt2:v,chosen:chk2.action==="proceed"||cur.checkB2Score>=cur.checkBScore?v:cur.origB});
+      }
+      // Pick better: use 2nd if it scored >= first OR if it passed check
+      if(chk2.action==="proceed"||cur.checkB2Score>=cur.checkBScore){
+        cur.b=v;
+        cur.checkBFlags=chk2.quality_flags||cur.checkBFlags;
+        cur.checkBProblem=chk2.problem_type||cur.checkBProblem;
+        cur.checkBScore=cur.checkB2Score;
+      }
+      // else keep cur.b (first answer)
+      currentView="confirm";render();
+    }).catch(function(){
+      // On error: use shorter/clearer of the two
+      if(v.trim().length>1&&v.trim().length<=cur.b.length*3){cur.b=v;}
+      currentView="confirm";render();
+    });
+    return;
   }
 
   // === CHECK B (opp, erste Eingabe) ===
@@ -656,10 +670,7 @@ function doSendTpl(v){
     else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}
     render();return;
   }
-  // Nach Check B Klärung: clarifizierten Begriff übernehmen, weiter
-  if(currentView==="check_clarify_b"){
-    cur.b=v;currentView="confirm";render();return;
-  }
+  // Nach Check B Klärung: Begriff wird in doSend bereits via Check 2 verarbeitet
   if(currentView==="elicit"){cur.a=v;if(v.split(/\s+/).length<3){msgs.push({r:"ai",t:tx("plaus",{v:v})});currentView="plaus"}else if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}}
   else if(currentView==="plaus"){cur.a=v;if(ladderRounds>0){msgs.push({r:"ai",t:tx("ladder",{v:v})});currentView="ladder";cur.ladCount=0}else{msgs.push({r:"ai",t:tx("opposite",{v:v})});currentView="opp"}}
   else if(currentView==="ladder"){cur.lad.push(v);cur.ladCount++;if(cur.ladCount<ladderRounds){msgs.push({r:"ai",t:tx("ladder",{v:v})})}else{msgs.push({r:"ai",t:tx("opposite",{v:cur.a})});currentView="opp"}}
@@ -683,10 +694,7 @@ function doSendAI(v){
     }).catch(function(){sending=false;msgs.push({r:"ai",t:tx("opposite",{v:cur.a})});currentView="opp";render()});
     return;
   }
-  // Nach Check B Klärung: Begriff übernehmen, confirm
-  if(currentView==="check_clarify_b"){
-    cur.b=v;currentView="confirm";render();return;
-  }
+  // Nach Check B Klärung: bereits in doSend via Check 2 verarbeitet
   if(currentView==="elicit"||currentView==="plaus")cur.a=v;
   else if(currentView==="ladder")cur.lad.push(v);
   sending=true;render();
@@ -850,7 +858,7 @@ else{
       currentView="rate";
       msgs.push({r:"ai",t:tx("resumeInfo")});
     } else if(round<maxCon&&tIdx<sets.length){
-      triadReady=false;currentView="triad_chat";
+      currentView="triad_chat";
       msgs.push({r:"ai",t:tx("resumeInfo")});
     } else if(fixedParsed.length>0&&cons.filter(function(c){return c.src==="fixed"}).length<fixedParsed.length){
       fdI=cons.filter(function(c){return c.src==="fixed"}).length;
