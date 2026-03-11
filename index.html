@@ -610,7 +610,7 @@ function doSend(){
     return;
   }
 
-  // After check_clarify_b: check 2nd answer, AI picks better, store both in lad
+  // After check_clarify_b: check 2nd answer, only override if clearly better
   if(currentView==="check_clarify_b"){
     cur.origB2=v;
     var exDims2=cons.map(function(c){return{pol_a:c.a,pol_b:c.b}});
@@ -618,22 +618,28 @@ function doSend(){
     callCheck("pol_b",v,cur.a,exDims2).then(function(chk2){
       sending=false;
       cur.checkB2Score=chk2.score_contribution||0;
-      // Store both attempts as side info in lad
+      // Log both attempts for analysis
       if(cur.origB&&cur.origB!==v){
-        cur.lad.push({type:"pol_b_clarification",attempt1:cur.origB,attempt2:v,chosen:chk2.action==="proceed"||cur.checkB2Score>=cur.checkBScore?v:cur.origB});
+        var chosen=(chk2.action==="proceed"&&cur.checkBScore<1&&v.length>2)?v:cur.origB;
+        cur.lad.push({type:"pol_b_clarification",attempt1:cur.origB,attempt2:v,chosen:chosen});
       }
-      // Pick better: use 2nd if it scored >= first OR if it passed check
-      if(chk2.action==="proceed"||cur.checkB2Score>=cur.checkBScore){
-        cur.b=v;
-        cur.checkBFlags=chk2.quality_flags||cur.checkBFlags;
-        cur.checkBProblem=chk2.problem_type||cur.checkBProblem;
-        cur.checkBScore=cur.checkB2Score;
+      // Only override first answer if:
+      // - first answer had a BAD check score (< 1) AND
+      // - second answer explicitly passes (action==="proceed") AND
+      // - second answer is substantive (more than 2 chars)
+      var firstWasBad = cur.checkBScore < 1;
+      var secondPassed = chk2.action === "proceed";
+      var secondSubstantive = v.trim().length > 2;
+      if(firstWasBad && secondPassed && secondSubstantive){
+        cur.b = v;
+        cur.checkBFlags = chk2.quality_flags || cur.checkBFlags;
+        cur.checkBProblem = chk2.problem_type || cur.checkBProblem;
+        cur.checkBScore = cur.checkB2Score;
       }
-      // else keep cur.b (first answer)
+      // In all other cases: keep first answer (cur.b unchanged)
       currentView="confirm";render();
     }).catch(function(){
-      // On error: use shorter/clearer of the two
-      if(v.trim().length>1&&v.trim().length<=cur.b.length*3){cur.b=v;}
+      // On error: always keep first answer
       currentView="confirm";render();
     });
     return;
